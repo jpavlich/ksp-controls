@@ -74,8 +74,20 @@ byte colPins[COLS] = {PB12, PB13, PB14, PB15, PA8};
 
 Keypad kpd = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
+void set_name()
+{
+
+  // USBComposite.setManufacturerString("SirEntropy");
+  USBComposite.setProductString("KSP Control");
+  USBComposite.setSerialString("00000000000000000001");
+  // USBComposite.setVendorId(VendorId);
+  // USBComposite.setProductId(ProductId);
+}
+
 void setup()
 {
+  set_name();
+
   HID.begin(HID_KEYBOARD_JOYSTICK);
   kspIO.registerComponent();
   joystick.setup();
