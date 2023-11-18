@@ -13,8 +13,13 @@ char keys[ROWS][COLS] = {
     {KEY_KP_9, KEY_KP_3, '7', '8', '9'},
     {KEY_KP_6, KEY_KP_4, 'r', 't', 'g'},
     {KEY_KP_7, KEY_KP_1, ' ', 'm', 'b'}};
-byte rowPins[ROWS] = {PA0, PA1, PA2, PA3, PA4};
-byte colPins[COLS] = {PB1, PB0, PA7, PA6, PA5};
+    // {'1', '2', '3', '4', '5'},
+    // {'6', '7', '8', '9', 'a'},
+    // {'b', 'c', 'd', 'e', 'f'},
+    // {'g', 'h', 'i', 'j', 'k'},
+    // {'l', 'm', 'n', 'o', 'p'}};
+byte rowPins[COLS] = {PA9, PA10, PB4, PB5, PB6};
+byte colPins[COLS] = {PB12, PB13, PB14, PB15, PA8};
 
 Keypad kpd = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
