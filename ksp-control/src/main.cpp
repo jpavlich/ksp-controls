@@ -2,11 +2,13 @@
 #include <USBComposite.h>
 #include "Keypad.h"
 #include "key_codes.h"
+#include "mode_selector.h"
 
 #include <Joy.h>
 #include <KspIO.h>
 #include <AnalogValue.h>
 #include <vector>
+#include <cfloat>
 #define LED_BUILTIN PB12
 
 const float THROTTLE_MIN = (32767 - 16852) >> 4;
@@ -58,6 +60,15 @@ Joy joystick(
         DISABLED,
         DISABLED,
     });
+
+AnalogValue modeSelectorValue = AnalogValue(PA6);
+
+ModeSelector modeSelector(modeSelectorValue, {171,
+                                              346,
+                                              510,
+                                              682,
+                                              842,
+                                              1023});
 KspIO kspIO;
 HIDKeyboard keyboard(HID);
 
@@ -86,6 +97,8 @@ void set_name()
 
 void setup()
 {
+
+  Serial3.begin(115200);
   set_name();
 
   HID.begin(HID_KEYBOARD_JOYSTICK);
@@ -123,4 +136,8 @@ void loop()
       }
     }
   }
+  modeSelector.loop();
+  Serial3.print(modeSelector.mode);
+  Serial3.print("\t");
+  Serial3.println(modeSelectorValue.get());
 }
