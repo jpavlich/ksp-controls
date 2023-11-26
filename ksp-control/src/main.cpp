@@ -4,20 +4,18 @@
 #include "key_codes.h"
 #include "mode_selector.h"
 
-#include <Joy.h>
-#include <KspIO.h>
-#include <AnalogValue.h>
+#include "joy_reader.h"
+#include "analog_value.h"
 #include <vector>
 #include <cfloat>
+#include "common.h"
+#include "Joy.h"
 #define LED_BUILTIN PB12
 
 const float THROTTLE_MIN = (32767 - 16852) >> 4;
 const float THROTTLE_MAX = (32767 + 10383) >> 4;
 
-USBHID HID;
-
-Joy joystick(
-    HID,
+JoyReader joy_reader = JoyReader(
     {
         AnalogValue(PA0),
         AnalogValue(PA1),
@@ -61,6 +59,12 @@ Joy joystick(
         DISABLED,
     });
 
+USBHID HID;
+Joy joy0(HID);
+std::vector<Joy *> joysticks = {&joy0};
+
+size_t current_joystick = 0;
+
 AnalogValue modeSelectorValue = AnalogValue(PA6);
 
 ModeSelector modeSelector(modeSelectorValue, {171,
@@ -69,7 +73,7 @@ ModeSelector modeSelector(modeSelectorValue, {171,
                                               682,
                                               842,
                                               1023});
-KspIO kspIO;
+// KspIO kspIO;
 HIDKeyboard keyboard(HID);
 
 const int ROWS = 5;
@@ -101,19 +105,26 @@ void setup()
   Serial3.begin(115200);
   set_name();
 
+  Serial3.println("...");
   HID.begin(HID_KEYBOARD_JOYSTICK);
-  kspIO.registerComponent();
-  joystick.setup();
-  kspIO.setup();
+  joy_reader.setup();
   while (!USBComposite)
     ;
   keyboard.begin();
 }
 
+void update_joystick()
+{
+  joy_reader.loop();
+  current_joystick = modeSelector.mode < joysticks.size() ? modeSelector.mode : joysticks.size() - 1;
+  joysticks[current_joystick]->update(joy_reader.joyReport);
+}
+
 void loop()
 {
-  joystick.loop();
-  kspIO.loop();
+  modeSelector.loop();
+  update_joystick();
+
   if (kpd.getKeys())
   {
     for (int i = 0; i < LIST_MAX; i++)
@@ -136,7 +147,6 @@ void loop()
       }
     }
   }
-  modeSelector.loop();
   Serial3.print(modeSelector.mode);
   Serial3.print("\t");
   Serial3.println(modeSelectorValue.get());
