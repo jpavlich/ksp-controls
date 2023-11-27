@@ -1,26 +1,18 @@
 #include <Arduino.h>
 #include <USBComposite.h>
-#include "Keypad.h"
-#include "key_codes.h"
-#include "mode_selector.h"
-
-#include "joy_reader.h"
-#include "analog_value.h"
 #include <vector>
 #include <cfloat>
 #include "common.h"
+#include "Keypad.h"
+#include "key_codes.h"
+#include "mode_selector.h"
+#include "joy_reader.h"
+#include "analog_value.h"
 #include "Joy.h"
 #define LED_BUILTIN PB12
 
 const float THROTTLE_MIN = (32767 - 16852) >> 4;
 const float THROTTLE_MAX = (32767 + 10383) >> 4;
-
-const uint8_t reportDescription[] = {
-    HID_MOUSE_REPORT_DESCRIPTOR(),
-    HID_KEYBOARD_REPORT_DESCRIPTOR(),
-    HID_JOYSTICK_REPORT_DESCRIPTOR(),
-    HID_JOYSTICK_REPORT_DESCRIPTOR(HID_JOYSTICK_REPORT_ID + 1),
-};
 
 JoyReader joy_reader = JoyReader(
     {
@@ -65,6 +57,13 @@ JoyReader joy_reader = JoyReader(
         DISABLED,
         DISABLED,
     });
+
+const uint8_t reportDescription[] = {
+    HID_MOUSE_REPORT_DESCRIPTOR(),
+    HID_KEYBOARD_REPORT_DESCRIPTOR(),
+    HID_JOYSTICK_REPORT_DESCRIPTOR(),
+    HID_JOYSTICK_REPORT_DESCRIPTOR(HID_JOYSTICK_REPORT_ID + 1),
+};
 
 USBCompositeSerial compositeSerial;
 USBHID HID;
