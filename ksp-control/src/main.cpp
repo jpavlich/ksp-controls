@@ -67,9 +67,9 @@ const uint8_t reportDescription[] = {
 
 USBCompositeSerial compositeSerial;
 USBHID HID;
-Joy joy1(HID);
-Joy joy2(HID, HID_JOYSTICK_REPORT_ID + 1);
-std::vector<Joy *> joysticks = {&joy1, &joy2};
+const size_t NUM_JOYSTICKS = 2;
+USBMultiXBox360<NUM_JOYSTICKS> x360;
+HIDKeyboard keyboard(HID);
 
 size_t current_joystick = 0;
 
@@ -81,8 +81,6 @@ ModeSelector modeSelector(modeSelectorValue, {171,
                                               682,
                                               842,
                                               1023});
-// KspIO kspIO;
-HIDKeyboard keyboard(HID);
 
 const int ROWS = 5;
 const int COLS = 5;
@@ -112,39 +110,56 @@ void setup()
 
   Serial3.begin(115200);
   set_name();
-
-  Serial3.println("...");
-  HID.begin(compositeSerial, reportDescription, sizeof(reportDescription));
   joy_reader.setup();
-  while (!USBComposite)
-    ;
 
-  for (auto joy : joysticks)
+  USBComposite.clear();
+  HID.registerComponent();
+  x360.registerComponent();
+  USBComposite.begin();
+
+  while (!USBComposite)
   {
-    joy->setManualReportMode(true);
+    Serial3.print(".");
+    delay(200);
   }
-  keyboard.begin();
+
+  // keyboard.begin();
+  Serial3.println("\nReady");
+}
+
+void update_mode()
+{
+  modeSelector.loop();
+  current_joystick = modeSelector.mode < NUM_JOYSTICKS ? modeSelector.mode : NUM_JOYSTICKS - 1;
 }
 
 void update_joystick()
 {
-  joy_reader.loop();
-  current_joystick = modeSelector.mode < joysticks.size() ? modeSelector.mode : joysticks.size() - 1;
-  Serial3.println(current_joystick);
-  joysticks[current_joystick]->update(joy_reader.joy_readings);
+  auto readings = joy_reader.joy_readings;
+
+  // Serial3.println(current_joystick);
+  XBox360WReport_t *joyReport = (XBox360WReport_t *)x360.controllers[current_joystick].getReport();
+  joyReport->x = readings.x;
+  joyReport->y = readings.y;
+
+  joyReport->rx = readings.throttle;
+  joyReport->ry = readings.x2;
+
+  joyReport->sliderLeft = readings.y2;
+  joyReport->buttons = readings.buttons;
+
+  x360.controllers[current_joystick].send();
 }
 
-void loop()
+void update_keyboard()
 {
-  modeSelector.loop();
-  update_joystick();
-
   if (kpd.getKeys())
   {
     for (int i = 0; i < LIST_MAX; i++)
     {
       if (kpd.key[i].stateChanged)
       {
+        Serial3.println(kpd.key[i].kchar);
         switch (kpd.key[i].kstate)
         {
         case PRESSED:
@@ -161,4 +176,15 @@ void loop()
       }
     }
   }
+}
+
+void loop()
+{
+
+  update_mode();
+  joy_reader.loop();
+
+  // update_joystick();
+
+  update_keyboard();
 }
