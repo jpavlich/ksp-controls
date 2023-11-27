@@ -15,6 +15,13 @@
 const float THROTTLE_MIN = (32767 - 16852) >> 4;
 const float THROTTLE_MAX = (32767 + 10383) >> 4;
 
+const uint8_t reportDescription[] = {
+    HID_MOUSE_REPORT_DESCRIPTOR(),
+    HID_KEYBOARD_REPORT_DESCRIPTOR(),
+    HID_JOYSTICK_REPORT_DESCRIPTOR(),
+    HID_JOYSTICK_REPORT_DESCRIPTOR(HID_JOYSTICK_REPORT_ID + 1),
+};
+
 JoyReader joy_reader = JoyReader(
     {
         AnalogValue(PA0),
@@ -59,9 +66,11 @@ JoyReader joy_reader = JoyReader(
         DISABLED,
     });
 
+USBCompositeSerial compositeSerial;
 USBHID HID;
-Joy joy0(HID);
-std::vector<Joy *> joysticks = {&joy0};
+Joy joy1(HID);
+Joy joy2(HID, HID_JOYSTICK_REPORT_ID + 1);
+std::vector<Joy *> joysticks = {&joy1, &joy2};
 
 size_t current_joystick = 0;
 
@@ -93,8 +102,8 @@ void set_name()
 {
 
   // USBComposite.setManufacturerString("SirEntropy");
-  USBComposite.setProductString("KSP Control");
-  USBComposite.setSerialString("00000000000000000001");
+  // USBComposite.setProductString("KSP Control");
+  // USBComposite.setSerialString("00000000000000000001");
   // USBComposite.setVendorId(VendorId);
   // USBComposite.setProductId(ProductId);
 }
@@ -106,10 +115,15 @@ void setup()
   set_name();
 
   Serial3.println("...");
-  HID.begin(HID_KEYBOARD_JOYSTICK);
+  HID.begin(compositeSerial, reportDescription, sizeof(reportDescription));
   joy_reader.setup();
   while (!USBComposite)
     ;
+
+  for (auto joy : joysticks)
+  {
+    joy->setManualReportMode(true);
+  }
   keyboard.begin();
 }
 
@@ -117,6 +131,7 @@ void update_joystick()
 {
   joy_reader.loop();
   current_joystick = modeSelector.mode < joysticks.size() ? modeSelector.mode : joysticks.size() - 1;
+  Serial3.println(current_joystick);
   joysticks[current_joystick]->update(joy_reader.joy_readings);
 }
 
@@ -147,5 +162,4 @@ void loop()
       }
     }
   }
-  Serial3.println(modeSelector.mode);
 }

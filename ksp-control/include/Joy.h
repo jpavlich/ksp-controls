@@ -12,8 +12,8 @@ class Joy : public HIDJoystick
 {
 private:
 public:
-    Joy(USBHID &_HID)
-        : HIDJoystick(_HID)
+    Joy(USBHID &_HID, uint8_t reportID = HID_JOYSTICK_REPORT_ID)
+        : HIDJoystick(_HID, reportID)
     {
     }
 
