@@ -117,7 +117,7 @@ void update_joystick()
 {
   joy_reader.loop();
   current_joystick = modeSelector.mode < joysticks.size() ? modeSelector.mode : joysticks.size() - 1;
-  joysticks[current_joystick]->update(joy_reader.joyReport);
+  joysticks[current_joystick]->update(joy_reader.joy_readings);
 }
 
 void loop()
@@ -147,7 +147,5 @@ void loop()
       }
     }
   }
-  Serial3.print(modeSelector.mode);
-  Serial3.print("\t");
-  Serial3.println(modeSelectorValue.get());
+  Serial3.println(modeSelector.mode);
 }

@@ -17,17 +17,17 @@ public:
     {
     }
 
-    void update(JoystickReport_t &report)
+    void update(JoyReadings &readings)
     {
-        // joyReport = report;
-        joyReport.x = report.x;
-        joyReport.y = report.y;
+        // joyReport = readings;
+        joyReport.x = readings.x;
+        joyReport.y = readings.y;
 
-        joyReport.rx = report.rx;
-        joyReport.ry = report.ry;
+        joyReport.rx = readings.throttle;
+        joyReport.ry = readings.x2;
 
-        joyReport.sliderLeft = report.sliderLeft;
-        joyReport.buttons = report.buttons;
+        joyReport.sliderLeft = readings.y2;
+        joyReport.buttons = readings.buttons;
 
         sendReport();
     }
