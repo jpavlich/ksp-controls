@@ -26,28 +26,7 @@ JoyReader joy_reader = JoyReader(
     {
         DISABLED,
         DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
         PB7,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
         DISABLED,
         DISABLED,
         DISABLED,
@@ -64,6 +43,31 @@ const uint8_t reportDescription[] = {
     HID_JOYSTICK_REPORT_DESCRIPTOR(),
     HID_JOYSTICK_REPORT_DESCRIPTOR(HID_JOYSTICK_REPORT_ID + 1),
 };
+
+// typedef struct {
+//     uint8_t reportID;
+//     uint8_t length;
+//     uint16_t x;
+//     uint16_t buttons;
+//     uint8_t sliderLeft;
+//     uint8_t sliderRight;
+//     int16_t y;
+//     int16_t rx;
+//     int16_t ry;
+//     uint8 unused[6];
+// } __packed JoyReport_t;
+
+// typedef struct {
+//     uint8_t reportID;
+//     uint32_t buttons;
+//     unsigned hat:4;
+//     unsigned x:10;
+//     unsigned y:10;
+//     unsigned rx:10;
+//     unsigned ry:10;
+//     unsigned sliderLeft:10;
+//     unsigned sliderRight:10;
+// } __packed JoystickReport_t;
 
 USBCompositeSerial compositeSerial;
 USBHID HID;
@@ -123,6 +127,11 @@ void setup()
     delay(200);
   }
 
+  for (size_t i = 0; i < NUM_JOYSTICKS; i++)
+  {
+    x360.controllers[i].setManualReportMode(true);
+  }
+
   // keyboard.begin();
   Serial3.println("\nReady");
 }
@@ -138,15 +147,33 @@ void update_joystick()
   auto readings = joy_reader.joy_readings;
 
   // Serial3.println(current_joystick);
-  XBox360WReport_t *joyReport = (XBox360WReport_t *)x360.controllers[current_joystick].getReport();
-  joyReport->x = readings.x;
-  joyReport->y = readings.y;
+  // XBox360WReport_t *joyReport = (XBox360WReport_t *)x360.controllers[current_joystick].getReport();
 
-  joyReport->rx = readings.throttle;
-  joyReport->ry = readings.x2;
+  Serial3.print(readings.x);
+  Serial3.print(" ");
+  Serial3.print(readings.y);
+  Serial3.print(" ");
+  Serial3.print(readings.throttle);
+  Serial3.print(" ");
+  Serial3.print(readings.x2);
+  Serial3.print(" ");
+  Serial3.print(readings.y2);
+  Serial3.print(" ");
+  Serial3.println(readings.buttons);
 
-  joyReport->sliderLeft = readings.y2;
-  joyReport->buttons = readings.buttons;
+  x360.controllers[current_joystick].X(readings.x);
+  x360.controllers[current_joystick].Y(readings.y);
+  x360.controllers[current_joystick].XRight(readings.x2);
+  x360.controllers[current_joystick].YRight(readings.y2);
+  x360.controllers[current_joystick].sliderLeft(readings.throttle);
+  x360.controllers[current_joystick].buttons(readings.buttons);
+
+  // joyReport->x = readings.x;
+  // joyReport->y = readings.y;
+  // joyReport->rx = readings.throttle;
+  // joyReport->ry = readings.x2;
+  // joyReport->sliderLeft = readings.y2;
+  // joyReport->buttons = readings.buttons;
 
   x360.controllers[current_joystick].send();
 }
@@ -184,7 +211,7 @@ void loop()
   update_mode();
   joy_reader.loop();
 
-  // update_joystick();
+  update_joystick();
 
   update_keyboard();
 }
