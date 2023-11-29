@@ -8,13 +8,12 @@
 
 typedef struct
 {
+    float x;
+    float y;
+    float x2;
+    float y2;
+    float throttle;
     uint32_t buttons;
-    unsigned hat : 4;
-    unsigned x : 10;
-    unsigned y : 10;
-    unsigned throttle : 10;
-    unsigned x2 : 10;
-    unsigned y2 : 10;
 } __packed JoyReadings;
 
 class JoyReader
@@ -39,25 +38,19 @@ public:
         }
     }
 
-    float scale(float val, float scale)
-    {
-        return (val - 511) * scale + 511;
-    }
-
     void loop()
     {
-        auto s = (1023 - axes[5].get()) / 1023;
 
         // Stick 1
-        joy_readings.x = scale(1023 - axes[0].get(), s);
-        joy_readings.y = scale(1023 - axes[1].get(), s);
+        joy_readings.x = axes[0].get();
+        joy_readings.y = axes[1].get();
 
         // Stick 2
-        joy_readings.x2 = scale(1023 - axes[2].get(), s);
-        joy_readings.y2 = scale(1023 - axes[3].get(), s);
+        joy_readings.x2 = axes[2].get();
+        joy_readings.y2 = axes[3].get();
 
         // Throttle
-        joy_readings.throttle = 1023 - axes[4].get();
+        joy_readings.throttle = axes[4].get();
 
         joy_readings.buttons = 0;
         for (size_t i = 0; i < button_pins.size(); i++)
@@ -67,5 +60,12 @@ public:
                 joy_readings.buttons |= (0x1 & ~digitalRead(button_pins[i])) << i;
             }
         }
+
+        // for (size_t i = 0; i < axes.size(); i++)
+        // {
+        //     Serial3.print(axes[i].get());
+        //     Serial3.print(" ");
+        // }
+        // Serial3.println();
     }
 };

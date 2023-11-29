@@ -11,17 +11,15 @@
 #include "Joy.h"
 #define LED_BUILTIN PB12
 
-const float THROTTLE_MIN = (32767 - 16852) >> 4;
-const float THROTTLE_MAX = (32767 + 10383) >> 4;
 
 JoyReader joy_reader = JoyReader(
     {
-        AnalogValue(PA0),
-        AnalogValue(PA1),
-        AnalogValue(PA2),
-        AnalogValue(PA3),
-        AnalogValue(PA4, THROTTLE_MIN, THROTTLE_MAX),
-        AnalogValue(PA5),
+        AnalogValue(PA0, 32767, -32767),
+        AnalogValue(PA1, -32767, 32767),
+        AnalogValue(PA2, -32767, 32767),
+        AnalogValue(PA3, -32767, 32767),
+        AnalogValue(PA4, 255, 0, 64.0/255.0, 174.0/255.0), // AnalogValue(PA4, THROTTLE_MIN, THROTTLE_MAX),
+        AnalogValue(PA5, -32767, 32767),
     },
     {
         DISABLED,
@@ -147,7 +145,7 @@ void update_joystick()
   auto readings = joy_reader.joy_readings;
 
   // Serial3.println(current_joystick);
-  // XBox360WReport_t *joyReport = (XBox360WReport_t *)x360.controllers[current_joystick].getReport();
+  XBox360WReport_t *joyReport = (XBox360WReport_t *)x360.controllers[current_joystick].getReport();
 
   Serial3.print(readings.x);
   Serial3.print(" ");
@@ -168,11 +166,11 @@ void update_joystick()
   x360.controllers[current_joystick].sliderLeft(readings.throttle);
   x360.controllers[current_joystick].buttons(readings.buttons);
 
-  // joyReport->x = readings.x;
-  // joyReport->y = readings.y;
-  // joyReport->rx = readings.throttle;
-  // joyReport->ry = readings.x2;
-  // joyReport->sliderLeft = readings.y2;
+  // joyReport->x = readings.x * 65535 - 32767;
+  // joyReport->y = readings.y * 65535 - 32767;
+  // joyReport->rx = readings.x2 * 65535 - 32767;
+  // joyReport->ry = readings.y2 * 65535 - 32767;
+  // joyReport->sliderLeft = readings.throttle * 65535 - 32767;
   // joyReport->buttons = readings.buttons;
 
   x360.controllers[current_joystick].send();

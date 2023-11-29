@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <cmath>
 
-const float MAX_AXIS = 4095;
+const float MAX_ANALOG_READ = 4095;
 
 class AnalogValue
 {
@@ -11,6 +11,8 @@ private:
     uint16_t pin;
     float min_val;
     float max_val;
+    float min_trim;
+    float max_trim;
     float passes;
     std::vector<float> window;
     uint16_t k;
@@ -22,29 +24,33 @@ private:
 
     void read()
     {
-        raw_value = analogRead(pin);
+        analog_value = analogRead(pin) / MAX_ANALOG_READ;
         auto n = next();
         avg -= window[n];
-        avg += raw_value;
-        window[n] = raw_value;
+        avg += analog_value;
+        window[n] = analog_value;
         k = n;
     }
 
 public:
     float avg;
-    uint16_t raw_value;
+    float analog_value;
     AnalogValue(uint16_t pin,
-                float min_val = 0,
-                float max_val = MAX_AXIS,
+                float min_val = -1.0,
+                float max_val = 1.0,
+                float min_trim = 0.0,
+                float max_trim = 1.0,
                 float window_size = 128,
                 float subdiv = 16) : pin(pin),
                                      min_val(min_val),
                                      max_val(max_val),
+                                     min_trim(min_trim),
+                                     max_trim(max_trim),
                                      passes(window_size / subdiv),
                                      window(std::vector<float>(window_size, 0)),
                                      k(0),
                                      avg(0),
-                                     raw_value(0)
+                                     analog_value(0)
     {
     }
     ~AnalogValue() {}
@@ -55,9 +61,10 @@ public:
         {
             read();
         }
-        auto val = avg / window.size(); // / 4;
-        val = std::max(val, min_val);
-        val = std::min(val, max_val);
-        return ((val - min_val) / (max_val - min_val)) * MAX_AXIS / 4.0f;
+        float val = avg / window.size();
+        val = std::max(val, min_trim);
+        val = std::min(val, max_trim);
+        // return ((val - min_val) / (max_val - min_val));
+        return (val - min_trim) * (max_val - min_val) / (max_trim - min_trim) + min_val;
     }
 };
