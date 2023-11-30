@@ -17,11 +17,10 @@ class JoyReader
 private:
     std::vector<AnalogValue> axes;
     std::vector<int> button_pins;
-
-public:
     JoyReadings joy_readings;
 
-    JoyReader(std::vector<AnalogValue> &&axes, std::vector<int> &&button_pins)
+public:
+    JoyReader(std::vector<AnalogValue> &axes, std::vector<int> &&button_pins)
         : axes(axes), button_pins(button_pins), joy_readings(JoyReadings())
     {
         joy_readings.axes.resize(axes.size(), 0.0);
@@ -35,7 +34,7 @@ public:
         }
     }
 
-    void loop()
+    const JoyReadings &loop()
     {
 
         // Stick 1
@@ -59,12 +58,6 @@ public:
                 joy_readings.buttons |= (0x1 & ~digitalRead(button_pins[i])) << i;
             }
         }
-
-        // for (size_t i = 0; i < axes.size(); i++)
-        // {
-        //     Serial3.print(axes[i].get());
-        //     Serial3.print(" ");
-        // }
-        // Serial3.println();
+        return joy_readings;
     }
 };

@@ -9,10 +9,7 @@ class AnalogValue
 {
 private:
     uint16_t pin;
-    float min_val;
-    float max_val;
-    float min_trim;
-    float max_trim;
+
     float passes;
     std::vector<float> window;
     uint16_t k;
@@ -36,16 +33,8 @@ public:
     float avg;
     float analog_value;
     AnalogValue(uint16_t pin,
-                float min_val = 0.0,
-                float max_val = 1.0,
-                float min_trim = 0.0,
-                float max_trim = 1.0,
                 float window_size = 128,
                 float subdiv = 16) : pin(pin),
-                                     min_val(min_val),
-                                     max_val(max_val),
-                                     min_trim(min_trim),
-                                     max_trim(max_trim),
                                      passes(window_size / subdiv),
                                      window(std::vector<float>(window_size, 0)),
                                      k(0),
@@ -61,10 +50,31 @@ public:
         {
             read();
         }
-        float val = avg / window.size();
+        return avg / window.size();
+    }
+};
+
+class LinearFunction
+{
+    float min_val;
+    float max_val;
+    float min_trim;
+    float max_trim;
+
+public:
+    LinearFunction(
+        float min_val,
+        float max_val,
+        float min_trim,
+        float max_trim) : min_val(min_val),
+                          max_val(max_val),
+                          min_trim(min_trim),
+                          max_trim(max_trim) {}
+
+    float apply(float val)
+    {
         val = std::max(val, min_trim);
         val = std::min(val, max_trim);
-        // return ((val - min_val) / (max_val - min_val));
         return (val - min_trim) * (max_val - min_val) / (max_trim - min_trim) + min_val;
     }
 };

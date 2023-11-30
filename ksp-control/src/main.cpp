@@ -13,34 +13,71 @@
 
 #define LED_BUILTIN PB12
 
-JoyReader joy_reader = JoyReader(
+std::vector<AnalogValue> analog_readers = {
+    AnalogValue(PA0),
+    AnalogValue(PA1),
+    AnalogValue(PA2),
+    AnalogValue(PA3),
+    AnalogValue(PA4),
+    AnalogValue(PA5),
+};
+
+JoyReader joy_reader = JoyReader(analog_readers, {
+                                                     // XBox buttons are nuts. The correct button is the
+                                                     // one pointed by the '->'
+                                                     DISABLED, // 0
+                                                     DISABLED, // 1
+                                                     DISABLED, // 2
+                                                     DISABLED, // 3
+                                                     DISABLED, // 4 -> 7
+                                                     DISABLED, // 5 -> 6
+                                                     DISABLED, // 6 -> 9
+                                                     PB7,      // 7 -> 10
+                                                     DISABLED, // 8 -> 4
+                                                     DISABLED, // 9 -> 5
+                                                     DISABLED, // 10 -> 8
+                                                     DISABLED, // 11
+                                                     DISABLED, // 12 -> 0
+                                                     DISABLED, // 13 -> 1
+                                                     DISABLED, // 14 -> 2
+                                                     DISABLED, // 15 -> 3
+                                                     DISABLED, // 16
+                                                     DISABLED, // 17
+                                                     DISABLED, // 18
+                                                     DISABLED, // 19
+                                                     DISABLED, // 20
+                                                     DISABLED, // 21
+                                                     DISABLED, // 22
+                                                     DISABLED, // 23
+                                                     DISABLED, // 24
+                                                     DISABLED, // 25
+                                                     DISABLED, // 26
+                                                     DISABLED, // 27
+                                                     DISABLED, // 28
+                                                     DISABLED, // 29
+                                                     DISABLED, // 30
+                                                     DISABLED, // 31
+                                                 });
+
+JoyReader wasd_reader = JoyReader(
+    analog_readers,
     {
-        AnalogValue(PA0, 32767, -32767),
-        AnalogValue(PA1, -32767, 32767),
-        AnalogValue(PA2, -32767, 32767),
-        AnalogValue(PA3, -32767, 32767),
-        AnalogValue(PA4, 255, 0, 64.0 / 255.0, 174.0 / 255.0), // AnalogValue(PA4, THROTTLE_MIN, THROTTLE_MAX),
-        AnalogValue(PA5, 1.0, 0.0),
-    },
-    {
-        // XBox buttons are nuts. The correct button is the
-        // one pointed by the '->'
-        DISABLED, // 0
+        PB7,      // 0
         DISABLED, // 1
         DISABLED, // 2
         DISABLED, // 3
-        DISABLED, // 4 -> 7
-        DISABLED, // 5 -> 6
-        DISABLED, // 6 -> 9
-        PB7,      // 7 -> 10
-        DISABLED, // 8 -> 4
-        DISABLED, // 9 -> 5
-        DISABLED, // 10 -> 8
+        DISABLED, // 4
+        DISABLED, // 5
+        DISABLED, // 6
+        DISABLED, // 7
+        DISABLED, // 8
+        DISABLED, // 9
+        DISABLED, // 10
         DISABLED, // 11
-        DISABLED, // 12 -> 0
-        DISABLED, // 13 -> 1
-        DISABLED, // 14 -> 2
-        DISABLED, // 15 -> 3
+        DISABLED, // 12
+        DISABLED, // 13
+        DISABLED, // 14
+        DISABLED, // 15
         DISABLED, // 16
         DISABLED, // 17
         DISABLED, // 18
@@ -124,7 +161,7 @@ void update_mode()
 
 void update_joystick()
 {
-  auto readings = joy_reader.joy_readings;
+  auto readings = joy_reader.loop();
 
   Serial3.print(readings.axes[0]);
   Serial3.print(" ");
@@ -181,7 +218,6 @@ void loop()
 {
 
   update_mode();
-  joy_reader.loop();
 
   update_joystick();
 
