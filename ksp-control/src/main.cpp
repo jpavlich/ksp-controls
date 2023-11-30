@@ -8,7 +8,9 @@
 #include "mode_selector.h"
 #include "joy_reader.h"
 #include "analog_value.h"
-#include "Joy.h"
+
+// const auto DATA_SIZE = sizeof(JoystickReport_t) - 1;
+
 #define LED_BUILTIN PB12
 
 JoyReader joy_reader = JoyReader(
@@ -87,8 +89,6 @@ byte colPins[COLS] = {PB12, PB13, PB14, PB15, PA8};
 
 Keypad kpd = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
-
-
 void setup()
 {
 
@@ -126,25 +126,25 @@ void update_joystick()
 {
   auto readings = joy_reader.joy_readings;
 
-  Serial3.print(readings.x);
+  Serial3.print(readings.axes[0]);
   Serial3.print(" ");
-  Serial3.print(readings.y);
+  Serial3.print(readings.axes[1]);
   Serial3.print(" ");
-  Serial3.print(readings.throttle);
+  Serial3.print(readings.axes[2]);
   Serial3.print(" ");
-  Serial3.print(readings.x2);
+  Serial3.print(readings.axes[3]);
   Serial3.print(" ");
-  Serial3.print(readings.y2);
+  Serial3.print(readings.axes[4]);
   Serial3.print(" ");
   Serial3.println(readings.buttons);
 
-  auto s = readings.scale;
+  auto s = readings.axes[5];
 
-  x360.controllers[current_joystick].X(readings.x * s);
-  x360.controllers[current_joystick].Y(readings.y * s);
-  x360.controllers[current_joystick].XRight(readings.x2 * s);
-  x360.controllers[current_joystick].YRight(readings.y2 * s);
-  x360.controllers[current_joystick].sliderLeft(readings.throttle);
+  x360.controllers[current_joystick].X(readings.axes[0] * s);
+  x360.controllers[current_joystick].Y(readings.axes[1] * s);
+  x360.controllers[current_joystick].XRight(readings.axes[2] * s);
+  x360.controllers[current_joystick].YRight(readings.axes[3] * s);
+  x360.controllers[current_joystick].sliderLeft(readings.axes[4]);
   x360.controllers[current_joystick].buttons(readings.buttons);
 
   x360.controllers[current_joystick].send();
