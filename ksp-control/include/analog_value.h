@@ -36,7 +36,7 @@ public:
     float avg;
     float analog_value;
     AnalogValue(uint16_t pin,
-                float min_val = -1.0,
+                float min_val = 0.0,
                 float max_val = 1.0,
                 float min_trim = 0.0,
                 float max_trim = 1.0,

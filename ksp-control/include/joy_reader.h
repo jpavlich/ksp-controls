@@ -13,6 +13,7 @@ typedef struct
     float x2;
     float y2;
     float throttle;
+    float scale;
     uint32_t buttons;
 } __packed JoyReadings;
 
@@ -51,6 +52,8 @@ public:
 
         // Throttle
         joy_readings.throttle = axes[4].get();
+
+        joy_readings.scale = axes[5].get();
 
         joy_readings.buttons = 0;
         for (size_t i = 0; i < button_pins.size(); i++)

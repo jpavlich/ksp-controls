@@ -11,28 +11,50 @@
 #include "Joy.h"
 #define LED_BUILTIN PB12
 
-
 JoyReader joy_reader = JoyReader(
     {
         AnalogValue(PA0, 32767, -32767),
         AnalogValue(PA1, -32767, 32767),
         AnalogValue(PA2, -32767, 32767),
         AnalogValue(PA3, -32767, 32767),
-        AnalogValue(PA4, 255, 0, 64.0/255.0, 174.0/255.0), // AnalogValue(PA4, THROTTLE_MIN, THROTTLE_MAX),
-        AnalogValue(PA5, -32767, 32767),
+        AnalogValue(PA4, 255, 0, 64.0 / 255.0, 174.0 / 255.0), // AnalogValue(PA4, THROTTLE_MIN, THROTTLE_MAX),
+        AnalogValue(PA5, 1.0, 0.0),
     },
     {
-        DISABLED,
-        DISABLED,
-        PB7,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
-        DISABLED,
+        // XBox buttons are nuts. The correct button is the
+        // one pointed by the '->'
+        DISABLED, // 0
+        DISABLED, // 1
+        DISABLED, // 2
+        DISABLED, // 3
+        DISABLED, // 4 -> 7
+        DISABLED, // 5 -> 6
+        DISABLED, // 6 -> 9
+        PB7,      // 7 -> 10
+        DISABLED, // 8 -> 4
+        DISABLED, // 9 -> 5
+        DISABLED, // 10 -> 8
+        DISABLED, // 11
+        DISABLED, // 12 -> 0
+        DISABLED, // 13 -> 1
+        DISABLED, // 14 -> 2
+        DISABLED, // 15 -> 3
+        DISABLED, // 16
+        DISABLED, // 17
+        DISABLED, // 18
+        DISABLED, // 19
+        DISABLED, // 20
+        DISABLED, // 21
+        DISABLED, // 22
+        DISABLED, // 23
+        DISABLED, // 24
+        DISABLED, // 25
+        DISABLED, // 26
+        DISABLED, // 27
+        DISABLED, // 28
+        DISABLED, // 29
+        DISABLED, // 30
+        DISABLED, // 31
     });
 
 const uint8_t reportDescription[] = {
@@ -75,7 +97,7 @@ HIDKeyboard keyboard(HID);
 
 size_t current_joystick = 0;
 
-AnalogValue modeSelectorValue = AnalogValue(PA6);
+AnalogValue modeSelectorValue = AnalogValue(PA6, 0, 1023);
 
 ModeSelector modeSelector(modeSelectorValue, {171,
                                               346,
@@ -138,14 +160,12 @@ void update_mode()
 {
   modeSelector.loop();
   current_joystick = modeSelector.mode < NUM_JOYSTICKS ? modeSelector.mode : NUM_JOYSTICKS - 1;
+  Serial3.println(current_joystick);
 }
 
 void update_joystick()
 {
   auto readings = joy_reader.joy_readings;
-
-  // Serial3.println(current_joystick);
-  XBox360WReport_t *joyReport = (XBox360WReport_t *)x360.controllers[current_joystick].getReport();
 
   Serial3.print(readings.x);
   Serial3.print(" ");
@@ -159,19 +179,14 @@ void update_joystick()
   Serial3.print(" ");
   Serial3.println(readings.buttons);
 
-  x360.controllers[current_joystick].X(readings.x);
-  x360.controllers[current_joystick].Y(readings.y);
-  x360.controllers[current_joystick].XRight(readings.x2);
-  x360.controllers[current_joystick].YRight(readings.y2);
+  auto s = readings.scale;
+
+  x360.controllers[current_joystick].X(readings.x * s);
+  x360.controllers[current_joystick].Y(readings.y * s);
+  x360.controllers[current_joystick].XRight(readings.x2 * s);
+  x360.controllers[current_joystick].YRight(readings.y2 * s);
   x360.controllers[current_joystick].sliderLeft(readings.throttle);
   x360.controllers[current_joystick].buttons(readings.buttons);
-
-  // joyReport->x = readings.x * 65535 - 32767;
-  // joyReport->y = readings.y * 65535 - 32767;
-  // joyReport->rx = readings.x2 * 65535 - 32767;
-  // joyReport->ry = readings.y2 * 65535 - 32767;
-  // joyReport->sliderLeft = readings.throttle * 65535 - 32767;
-  // joyReport->buttons = readings.buttons;
 
   x360.controllers[current_joystick].send();
 }

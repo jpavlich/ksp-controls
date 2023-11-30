@@ -23,6 +23,7 @@ public:
     void loop()
     {
         auto val = value.get();
+        Serial3.println(val);
         for (size_t i = 0; i < divisions.size(); i++)
         {
             if (val < divisions[i])
@@ -32,8 +33,5 @@ public:
             }
         }
 
-        // joyReport.buttons |= (0x1 & ~digitalRead(button_pins[i])) << i;
-
-        // sendReport();
     }
 };
