@@ -57,38 +57,6 @@ JoyReader joy_reader = JoyReader(
         DISABLED, // 31
     });
 
-const uint8_t reportDescription[] = {
-    HID_MOUSE_REPORT_DESCRIPTOR(),
-    HID_KEYBOARD_REPORT_DESCRIPTOR(),
-    HID_JOYSTICK_REPORT_DESCRIPTOR(),
-    HID_JOYSTICK_REPORT_DESCRIPTOR(HID_JOYSTICK_REPORT_ID + 1),
-};
-
-// typedef struct {
-//     uint8_t reportID;
-//     uint8_t length;
-//     uint16_t x;
-//     uint16_t buttons;
-//     uint8_t sliderLeft;
-//     uint8_t sliderRight;
-//     int16_t y;
-//     int16_t rx;
-//     int16_t ry;
-//     uint8 unused[6];
-// } __packed JoyReport_t;
-
-// typedef struct {
-//     uint8_t reportID;
-//     uint32_t buttons;
-//     unsigned hat:4;
-//     unsigned x:10;
-//     unsigned y:10;
-//     unsigned rx:10;
-//     unsigned ry:10;
-//     unsigned sliderLeft:10;
-//     unsigned sliderRight:10;
-// } __packed JoystickReport_t;
-
 USBCompositeSerial compositeSerial;
 USBHID HID;
 const size_t NUM_JOYSTICKS = 2;
@@ -119,21 +87,12 @@ byte colPins[COLS] = {PB12, PB13, PB14, PB15, PA8};
 
 Keypad kpd = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
-void set_name()
-{
 
-  // USBComposite.setManufacturerString("SirEntropy");
-  // USBComposite.setProductString("KSP Control");
-  // USBComposite.setSerialString("00000000000000000001");
-  // USBComposite.setVendorId(VendorId);
-  // USBComposite.setProductId(ProductId);
-}
 
 void setup()
 {
 
   Serial3.begin(115200);
-  set_name();
   joy_reader.setup();
 
   USBComposite.clear();
