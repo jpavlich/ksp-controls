@@ -29,11 +29,10 @@ private:
     AnalogValue<> axes[NUM_AXES];
     Fun axes_conversions[NUM_AXES];
     int (&button_pins)[NUM_BUTTONS];
-    JoyReadings<NUM_AXES> joy_readings;
 
 public:
     JoyReader(AnalogValue<> (&axes)[NUM_AXES], Fun (&axes_conversions)[NUM_AXES], int (&button_pins)[NUM_BUTTONS])
-        : axes(axes), axes_conversions(axes_conversions), button_pins(button_pins), joy_readings(JoyReadings<NUM_AXES>())
+        : axes(axes), axes_conversions(axes_conversions), button_pins(button_pins)
     {
     }
 
@@ -45,7 +44,7 @@ public:
         }
     }
 
-    const JoyReadings<NUM_AXES> &read()
+    void read(JoyReadings<NUM_AXES> &readings)
     {
         // Serial.println(axes_conversions[0](0.5));
         // auto f = [](float x)
@@ -53,21 +52,20 @@ public:
         // f(0.5);
         for (size_t i = 0; i < NUM_AXES; i++)
         {
-            joy_readings.axes[i] = axes_conversions[i](axes[i].get());
-            // joy_readings.axes[i] = axes[i].get();
-            // Serial3.print(joy_readings.axes[i]);
+            readings.axes[i] = axes_conversions[i](axes[i].get());
+            // readings.axes[i] = axes[i].get();
+            // Serial3.print(readings.axes[i]);
             // Serial3.print(" ");
         }
         // Serial3.println();
 
-        joy_readings.buttons = 0;
+        readings.buttons = 0;
         for (size_t i = 0; i < NUM_BUTTONS; i++)
         {
             if (button_pins[i] != DISABLED)
             {
-                joy_readings.buttons |= (0x1 & ~digitalRead(button_pins[i])) << i;
+                readings.buttons |= (0x1 & ~digitalRead(button_pins[i])) << i;
             }
         }
-        return joy_readings;
     }
 };

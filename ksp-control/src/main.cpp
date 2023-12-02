@@ -8,15 +8,23 @@
 #include "joy_reader.h"
 #include "analog_value.h"
 
-#define LED_BUILTIN PB12
+// #define LED_BUILTIN PB12
 
 const size_t NUM_JOYSTICKS = 2;
+const size_t NUM_WASD = 1;
 const size_t NUM_AXES = 6;
 const size_t NUM_JOY_BUTTONS = 16;
 const size_t NUM_WASD_BUTTONS = 1;
 const size_t NUM_MODES = 6;
 const size_t KEYPAD_ROWS = 5;
 const size_t KEYPAD_COLS = 5;
+const size_t JOY_I_START = 0;
+const size_t JOY_I_END = JOY_I_START + NUM_JOYSTICKS;
+const size_t WASD_I_START = JOY_I_END;
+const size_t WASD_I_END = WASD_I_START + NUM_WASD;
+
+size_t mode = 0;
+size_t prev_mode = 0;
 
 AnalogValue<> analog_readers[NUM_AXES] = {
     AnalogValue<>(PA0),
@@ -82,16 +90,29 @@ int wasd_buttons[NUM_WASD_BUTTONS] = {
     PB7, // 0
 };
 
-JoyReader<NUM_AXES, NUM_JOY_BUTTONS> joy_reader(analog_readers, joy_conversion, joy_buttons);
+int wasd_keys[NUM_AXES][2] = {
+    {'a', 'd'},
+    {'w', 's'},
+    {'q', 'e'},
+    {KEY_LEFT_SHIFT, KEY_LEFT_CTRL},
+    {0, 0},
+    {0, 0},
+};
+
+float wasd_axes_prev_reading[NUM_AXES] = {0.0};
+
+JoyReader<NUM_AXES, NUM_JOY_BUTTONS>
+    joy_reader(analog_readers, joy_conversion, joy_buttons);
 JoyReader<NUM_AXES, NUM_WASD_BUTTONS> wasd_reader(analog_readers, wasd_conversion, wasd_buttons);
 
-USBCompositeSerial compositeSerial;
+JoyReadings<NUM_AXES> readings[NUM_MODES];
+
 USBHID HID;
 
-USBMultiXBox360<NUM_JOYSTICKS> x360;
+// USBMultiXBox360<NUM_JOYSTICKS> x360;
+USBXBox360W<2> x360;
+HIDJoystick joystick(HID);
 HIDKeyboard keyboard(HID);
-
-size_t current_joystick = 0;
 
 AnalogValue<> modeSelectorValue = AnalogValue<>(PA6);
 
@@ -132,35 +153,73 @@ void setup()
     delay(200);
   }
 
-  for (size_t i = 0; i < NUM_JOYSTICKS; i++)
-  {
-    x360.controllers[i].setManualReportMode(true);
-  }
+  x360.controllers[0].setManualReportMode(true);
+  x360.controllers[1].setManualReportMode(true);
+  joystick.setManualReportMode(true);
 
   Serial3.println("\nReady");
 }
 
-void update_mode()
+void update_x360(size_t i)
 {
-  modeSelector.loop();
-  current_joystick = modeSelector.mode < NUM_JOYSTICKS ? modeSelector.mode : NUM_JOYSTICKS - 1;
-  Serial3.println(current_joystick);
+
+  auto s = readings[i].axes[5];
+
+  size_t joy_i = i;
+  x360.controllers[joy_i].X(readings[i].axes[0] * s);
+  x360.controllers[joy_i].Y(readings[i].axes[1] * s);
+  x360.controllers[joy_i].XRight(readings[i].axes[2] * s);
+  x360.controllers[joy_i].YRight(readings[i].axes[3] * s);
+  x360.controllers[joy_i].sliderLeft(readings[i].axes[4]);
+  x360.controllers[joy_i].buttons(readings[i].buttons);
+
+  x360.controllers[joy_i].send();
+}
+void update_joystick(size_t i)
+{
+
+  auto s = readings[i].axes[5];
+
+  joystick.X(readings[i].axes[0] * s);
+  joystick.Y(readings[i].axes[1] * s);
+  joystick.Xrotate(readings[i].axes[2] * s);
+  joystick.Yrotate(readings[i].axes[3] * s);
+  joystick.sliderLeft(readings[i].axes[4]);
+  joystick.buttons(readings[i].buttons);
+
+  joystick.send();
 }
 
-void update_joystick()
+void update_wasd(size_t i)
 {
-  auto readings = joy_reader.read();
+  for (size_t j = 0; j < NUM_AXES; j++)
+  {
 
-  auto s = readings.axes[5];
+    if (wasd_keys[j][0] != 0)
+    {
+      if (readings[i].axes[j] < -0.25 && wasd_axes_prev_reading[j] >= -0.25)
+      {
+        keyboard.press(wasd_keys[j][0]);
+      }
+      else if (readings[i].axes[j] >= -0.25 && wasd_axes_prev_reading[j] < -0.25)
+      {
+        keyboard.release(wasd_keys[j][0]);
+      }
+    }
+    if (wasd_keys[j][1] != 0)
+    {
+      if (readings[i].axes[j] > 0.25 && wasd_axes_prev_reading[j] <= 0.25)
+      {
+        keyboard.press(wasd_keys[j][1]);
+      }
+      else if (readings[i].axes[j] <= 0.25 && wasd_axes_prev_reading[j] > 0.25)
 
-  x360.controllers[current_joystick].X(readings.axes[0] * s);
-  x360.controllers[current_joystick].Y(readings.axes[1] * s);
-  x360.controllers[current_joystick].XRight(readings.axes[2] * s);
-  x360.controllers[current_joystick].YRight(readings.axes[3] * s);
-  x360.controllers[current_joystick].sliderLeft(readings.axes[4]);
-  x360.controllers[current_joystick].buttons(readings.buttons);
-
-  x360.controllers[current_joystick].send();
+      {
+        keyboard.release(wasd_keys[j][1]);
+      }
+    }
+    wasd_axes_prev_reading[j] = readings[i].axes[j];
+  }
 }
 
 void update_keyboard()
@@ -192,10 +251,35 @@ void update_keyboard()
 
 void loop()
 {
+  prev_mode = mode;
+  mode = modeSelector.update();
 
-  update_mode();
+  if (mode != prev_mode)
+  {
+    keyboard.releaseAll();
+  }
+  switch (mode)
+  {
+  case 0: // Enable Joy 1
+    joy_reader.read(readings[0]);
+    update_x360(0);
+    // update_joystick(0);
+    break;
+  case 1: // Enable Joy 2
+    joy_reader.read(readings[1]);
+    update_x360(1);
+    break;
+  case 2: // Enable WASD 1
+    wasd_reader.read(readings[2]);
+    update_wasd(2);
+    break;
 
-  update_joystick();
+  default:
+    wasd_reader.read(readings[2]);
+    update_wasd(2);
+    break;
+  }
 
+  // update_wasd();
   update_keyboard();
 }

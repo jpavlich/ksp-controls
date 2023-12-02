@@ -35,11 +35,10 @@ public:
     float analog_value;
     AnalogValue(uint16_t pin,
                 float subdiv = 16) : pin(pin),
-                                     passes(WINDOW_SIZE / subdiv),
-                                     window({0.0}),
-                                     k(0),
-                                     avg(0),
-                                     analog_value(0)
+                                     passes(WINDOW_SIZE / subdiv)
+                                     
+                                  
+
     {
     }
     ~AnalogValue() {}
