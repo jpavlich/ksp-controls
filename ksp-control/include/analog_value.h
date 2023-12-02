@@ -21,7 +21,9 @@ private:
 
     void read()
     {
-        analog_value = analogRead(pin) / MAX_ANALOG_READ;
+        auto raw = (float)analogRead(pin);
+        
+        analog_value = raw / MAX_ANALOG_READ;
         auto n = next();
         avg -= window[n];
         avg += analog_value;
@@ -54,27 +56,3 @@ public:
     }
 };
 
-class LinearFunction
-{
-    float min_val;
-    float max_val;
-    float min_trim;
-    float max_trim;
-
-public:
-    LinearFunction(
-        float min_val,
-        float max_val,
-        float min_trim,
-        float max_trim) : min_val(min_val),
-                          max_val(max_val),
-                          min_trim(min_trim),
-                          max_trim(max_trim) {}
-
-    float apply(float val)
-    {
-        val = std::max(val, min_trim);
-        val = std::min(val, max_trim);
-        return (val - min_trim) * (max_val - min_val) / (max_trim - min_trim) + min_val;
-    }
-};

@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <USBComposite.h>
-#include <vector>
 #include <cfloat>
 #include "common.h"
 #include "Keypad.h"
@@ -22,62 +21,43 @@ std::vector<AnalogValue> analog_readers = {
     AnalogValue(PA5),
 };
 
-JoyReader joy_reader = JoyReader(analog_readers, {
-                                                     // XBox buttons are nuts. The correct button is the
-                                                     // one pointed by the '->'
-                                                     DISABLED, // 0
-                                                     DISABLED, // 1
-                                                     DISABLED, // 2
-                                                     DISABLED, // 3
-                                                     DISABLED, // 4 -> 7
-                                                     DISABLED, // 5 -> 6
-                                                     DISABLED, // 6 -> 9
-                                                     PB7,      // 7 -> 10
-                                                     DISABLED, // 8 -> 4
-                                                     DISABLED, // 9 -> 5
-                                                     DISABLED, // 10 -> 8
-                                                     DISABLED, // 11
-                                                     DISABLED, // 12 -> 0
-                                                     DISABLED, // 13 -> 1
-                                                     DISABLED, // 14 -> 2
-                                                     DISABLED, // 15 -> 3
-                                                     DISABLED, // 16
-                                                     DISABLED, // 17
-                                                     DISABLED, // 18
-                                                     DISABLED, // 19
-                                                     DISABLED, // 20
-                                                     DISABLED, // 21
-                                                     DISABLED, // 22
-                                                     DISABLED, // 23
-                                                     DISABLED, // 24
-                                                     DISABLED, // 25
-                                                     DISABLED, // 26
-                                                     DISABLED, // 27
-                                                     DISABLED, // 28
-                                                     DISABLED, // 29
-                                                     DISABLED, // 30
-                                                     DISABLED, // 31
-                                                 });
+Fun conversion_funcs[6] = {
+    [](const float x)
+    { return linear(x, 0.0, 1.0, 32767, -32767); },
+    [](const float x)
+    { return linear(x, 0.0, 1.0, -32767, 32767); },
+    [](const float x)
+    { return linear(x, 0.0, 1.0, -32767, 32767); },
+    [](const float x)
+    { return linear(x, 0.0, 1.0, -32767, 32767); },
+    [](const float x)
+    { return linear(x, 64.0 / 255.0, 174.0 / 255.0, 255, 0); },
+    [](const float x)
+    { return linear(x, 0.0, 1.0, 1.0, 0.0); }};
 
-JoyReader wasd_reader = JoyReader(
+JoyReader joy_reader(
     analog_readers,
+    conversion_funcs,
+
     {
-        PB7,      // 0
+        // XBox buttons are nuts. The correct button is the
+        // one pointed by the '->'
+        DISABLED, // 0
         DISABLED, // 1
         DISABLED, // 2
         DISABLED, // 3
-        DISABLED, // 4
-        DISABLED, // 5
-        DISABLED, // 6
-        DISABLED, // 7
-        DISABLED, // 8
-        DISABLED, // 9
-        DISABLED, // 10
+        DISABLED, // 4 -> 7
+        DISABLED, // 5 -> 6
+        DISABLED, // 6 -> 9
+        PB7,      // 7 -> 10
+        DISABLED, // 8 -> 4
+        DISABLED, // 9 -> 5
+        DISABLED, // 10 -> 8
         DISABLED, // 11
-        DISABLED, // 12
-        DISABLED, // 13
-        DISABLED, // 14
-        DISABLED, // 15
+        DISABLED, // 12 -> 0
+        DISABLED, // 13 -> 1
+        DISABLED, // 14 -> 2
+        DISABLED, // 15 -> 3
         DISABLED, // 16
         DISABLED, // 17
         DISABLED, // 18
@@ -96,6 +76,57 @@ JoyReader wasd_reader = JoyReader(
         DISABLED, // 31
     });
 
+// JoyReader wasd_reader(
+//     analog_readers,
+//     {
+//         [](float x)
+//         { return linear(x, 0.0, 1.0, 1.0, -1.0); },
+//         [](float x)
+//         { return linear(x, 0.0, 1.0, -1.0, 1.0); },
+//         [](float x)
+//         { return linear(x, 0.0, 1.0, -1.0, 1.0); },
+//         [](float x)
+//         { return linear(x, 0.0, 1.0, -1.0, 1.0); },
+//         [](float x)
+//         { return linear(x, 64.0 / 255.0, 174.0 / 255.0, 255, 0); },
+//         [](float x)
+//         { return linear(x, 0.0, 1.0, 1.0, 0.0); },
+//     },
+//     {
+//         PB7,      // 0
+//         DISABLED, // 1
+//         DISABLED, // 2
+//         DISABLED, // 3
+//         DISABLED, // 4
+//         DISABLED, // 5
+//         DISABLED, // 6
+//         DISABLED, // 7
+//         DISABLED, // 8
+//         DISABLED, // 9
+//         DISABLED, // 10
+//         DISABLED, // 11
+//         DISABLED, // 12
+//         DISABLED, // 13
+//         DISABLED, // 14
+//         DISABLED, // 15
+//         DISABLED, // 16
+//         DISABLED, // 17
+//         DISABLED, // 18
+//         DISABLED, // 19
+//         DISABLED, // 20
+//         DISABLED, // 21
+//         DISABLED, // 22
+//         DISABLED, // 23
+//         DISABLED, // 24
+//         DISABLED, // 25
+//         DISABLED, // 26
+//         DISABLED, // 27
+//         DISABLED, // 28
+//         DISABLED, // 29
+//         DISABLED, // 30
+//         DISABLED, // 31
+//     });
+
 USBCompositeSerial compositeSerial;
 USBHID HID;
 const size_t NUM_JOYSTICKS = 2;
@@ -104,14 +135,14 @@ HIDKeyboard keyboard(HID);
 
 size_t current_joystick = 0;
 
-AnalogValue modeSelectorValue = AnalogValue(PA6, 0, 1023);
+AnalogValue modeSelectorValue = AnalogValue(PA6);
 
-ModeSelector modeSelector(modeSelectorValue, {171,
-                                              346,
-                                              510,
-                                              682,
-                                              842,
-                                              1023});
+ModeSelector modeSelector(modeSelectorValue, {171.0 / 1023.0,
+                                              346.0 / 1023.0,
+                                              510.0 / 1023.0,
+                                              682.0 / 1023.0,
+                                              842.0 / 1023.0,
+                                              1.0});
 
 const int ROWS = 5;
 const int COLS = 5;
@@ -161,19 +192,19 @@ void update_mode()
 
 void update_joystick()
 {
-  auto readings = joy_reader.loop();
+  auto readings = joy_reader.read();
 
-  Serial3.print(readings.axes[0]);
-  Serial3.print(" ");
-  Serial3.print(readings.axes[1]);
-  Serial3.print(" ");
-  Serial3.print(readings.axes[2]);
-  Serial3.print(" ");
-  Serial3.print(readings.axes[3]);
-  Serial3.print(" ");
-  Serial3.print(readings.axes[4]);
-  Serial3.print(" ");
-  Serial3.println(readings.buttons);
+  // Serial3.print(readings.axes[0]);
+  // Serial3.print(" ");
+  // Serial3.print(readings.axes[1]);
+  // Serial3.print(" ");
+  // Serial3.print(readings.axes[2]);
+  // Serial3.print(" ");
+  // Serial3.print(readings.axes[3]);
+  // Serial3.print(" ");
+  // Serial3.print(readings.axes[4]);
+  // Serial3.print(" ");
+  // Serial3.println(readings.buttons);
 
   auto s = readings.axes[5];
 
@@ -195,7 +226,7 @@ void update_keyboard()
     {
       if (kpd.key[i].stateChanged)
       {
-        Serial3.println(kpd.key[i].kchar);
+        // Serial3.println(kpd.key[i].kchar);
         switch (kpd.key[i].kstate)
         {
         case PRESSED:

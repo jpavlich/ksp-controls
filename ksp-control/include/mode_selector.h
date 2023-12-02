@@ -16,7 +16,7 @@ public:
         for (size_t i = 0; i < mode_mean_values.size() - 1; i++)
         {
             divisions.push_back((mode_mean_values[i] + mode_mean_values[i + 1]) / 2.0);
-                }
+        }
         divisions.push_back(mode_mean_values[mode_mean_values.size() - 1] * 2.0);
     }
 
@@ -32,6 +32,5 @@ public:
                 break;
             }
         }
-
     }
 };
