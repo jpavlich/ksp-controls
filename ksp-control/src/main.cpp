@@ -110,8 +110,8 @@ JoyReadings<NUM_AXES> readings[NUM_MODES];
 USBHID HID;
 
 // USBMultiXBox360<NUM_JOYSTICKS> x360;
-USBXBox360W<2> x360;
-HIDJoystick joystick(HID);
+USBXBox360W<NUM_JOYSTICKS> x360;
+// HIDJoystick joystick(HID);
 HIDKeyboard keyboard(HID);
 
 AnalogValue<> modeSelectorValue = AnalogValue<>(PA6);
@@ -153,9 +153,11 @@ void setup()
     delay(200);
   }
 
-  x360.controllers[0].setManualReportMode(true);
-  x360.controllers[1].setManualReportMode(true);
-  joystick.setManualReportMode(true);
+  for (size_t i = 0; i < NUM_JOYSTICKS; i++)
+  {
+    x360.controllers[i].setManualReportMode(true);
+  }
+  // joystick.setManualReportMode(true);
 
   Serial3.println("\nReady");
 }
@@ -174,20 +176,6 @@ void update_x360(size_t i)
   x360.controllers[joy_i].buttons(readings[i].buttons);
 
   x360.controllers[joy_i].send();
-}
-void update_joystick(size_t i)
-{
-
-  auto s = readings[i].axes[5];
-
-  joystick.X(readings[i].axes[0] * s);
-  joystick.Y(readings[i].axes[1] * s);
-  joystick.Xrotate(readings[i].axes[2] * s);
-  joystick.Yrotate(readings[i].axes[3] * s);
-  joystick.sliderLeft(readings[i].axes[4]);
-  joystick.buttons(readings[i].buttons);
-
-  joystick.send();
 }
 
 void update_wasd(size_t i)
