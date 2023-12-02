@@ -6,11 +6,12 @@
 #include "analog_value.h"
 #include "common.h"
 
-typedef struct
+template <int NUM_AXES>
+struct JoyReadings
 {
-    std::vector<float> axes;
+    float axes[NUM_AXES];
     uint32_t buttons;
-} JoyReadings;
+};
 
 float linear(float val, float min_in, float max_in, float min_out, float max_out)
 {
@@ -21,20 +22,20 @@ float linear(float val, float min_in, float max_in, float min_out, float max_out
 
 typedef std::function<float(float)> Fun;
 
+template <int NUM_AXES, int NUM_BUTTONS>
 class JoyReader
 {
 private:
-    std::vector<AnalogValue> axes;
-    Fun *axes_conversions;
-    std::vector<int> button_pins;
-    JoyReadings joy_readings;
+    AnalogValue axes[NUM_AXES];
+    Fun axes_conversions[NUM_AXES];
+    int (&button_pins)[NUM_BUTTONS];
+    JoyReadings<NUM_AXES> joy_readings;
 
 public:
-    JoyReader(std::vector<AnalogValue> &axes, Fun *axes_conversions, std::vector<int> &&button_pins)
-        : axes(axes), axes_conversions(axes_conversions), button_pins(button_pins), joy_readings(JoyReadings())
+    JoyReader(AnalogValue (&axes)[NUM_AXES], Fun (&axes_conversions)[NUM_AXES], int (&button_pins)[NUM_BUTTONS])
+        : axes(axes), axes_conversions(axes_conversions), button_pins(button_pins)
+        // , joy_readings(JoyReadings<NUM_AXES>())
     {
-        // ASSERT(axes.size() == axes_conversions.size());
-        joy_readings.axes.resize(axes.size(), 0.0);
     }
 
     void setup()
@@ -45,13 +46,13 @@ public:
         }
     }
 
-    const JoyReadings &read()
+    const JoyReadings<NUM_AXES> &read()
     {
         // Serial.println(axes_conversions[0](0.5));
         // auto f = [](float x)
         // { return linear(x, 0.0, 1.0, 32767, -32767); };
         // f(0.5);
-        for (size_t i = 0; i < axes.size(); i++)
+        for (size_t i = 0; i < NUM_AXES; i++)
         {
             joy_readings.axes[i] = axes_conversions[i](axes[i].get());
             // joy_readings.axes[i] = axes[i].get();
@@ -61,7 +62,7 @@ public:
         // Serial3.println();
 
         joy_readings.buttons = 0;
-        for (size_t i = 0; i < button_pins.size(); i++)
+        for (size_t i = 0; i < NUM_BUTTONS; i++)
         {
             if (button_pins[i] != DISABLED)
             {

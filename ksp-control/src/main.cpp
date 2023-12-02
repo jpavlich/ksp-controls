@@ -12,7 +12,7 @@
 
 #define LED_BUILTIN PB12
 
-std::vector<AnalogValue> analog_readers = {
+AnalogValue analog_readers[6] = {
     AnalogValue(PA0),
     AnalogValue(PA1),
     AnalogValue(PA2),
@@ -21,7 +21,7 @@ std::vector<AnalogValue> analog_readers = {
     AnalogValue(PA5),
 };
 
-Fun conversion_funcs[6] = {
+Fun joy_conversion[6] = {
     [](const float x)
     { return linear(x, 0.0, 1.0, 32767, -32767); },
     [](const float x)
@@ -35,63 +35,67 @@ Fun conversion_funcs[6] = {
     [](const float x)
     { return linear(x, 0.0, 1.0, 1.0, 0.0); }};
 
-JoyReader joy_reader(
-    analog_readers,
-    conversion_funcs,
+Fun wasd_conversion[6] = {
+    [](float x)
+    { return linear(x, 0.0, 1.0, 1.0, -1.0); },
+    [](float x)
+    { return linear(x, 0.0, 1.0, -1.0, 1.0); },
+    [](float x)
+    { return linear(x, 0.0, 1.0, -1.0, 1.0); },
+    [](float x)
+    { return linear(x, 0.0, 1.0, -1.0, 1.0); },
+    [](float x)
+    { return linear(x, 64.0 / 255.0, 174.0 / 255.0, 255, 0); },
+    [](float x)
+    { return linear(x, 0.0, 1.0, 1.0, 0.0); },
+};
 
-    {
-        // XBox buttons are nuts. The correct button is the
-        // one pointed by the '->'
-        DISABLED, // 0
-        DISABLED, // 1
-        DISABLED, // 2
-        DISABLED, // 3
-        DISABLED, // 4 -> 7
-        DISABLED, // 5 -> 6
-        DISABLED, // 6 -> 9
-        PB7,      // 7 -> 10
-        DISABLED, // 8 -> 4
-        DISABLED, // 9 -> 5
-        DISABLED, // 10 -> 8
-        DISABLED, // 11
-        DISABLED, // 12 -> 0
-        DISABLED, // 13 -> 1
-        DISABLED, // 14 -> 2
-        DISABLED, // 15 -> 3
-        DISABLED, // 16
-        DISABLED, // 17
-        DISABLED, // 18
-        DISABLED, // 19
-        DISABLED, // 20
-        DISABLED, // 21
-        DISABLED, // 22
-        DISABLED, // 23
-        DISABLED, // 24
-        DISABLED, // 25
-        DISABLED, // 26
-        DISABLED, // 27
-        DISABLED, // 28
-        DISABLED, // 29
-        DISABLED, // 30
-        DISABLED, // 31
-    });
+int joy_buttons[32] = {
+    // XBox buttons are nuts. The correct button is the
+    // one pointed by the '->'
+    DISABLED, // 0
+    DISABLED, // 1
+    DISABLED, // 2
+    DISABLED, // 3
+    DISABLED, // 4 -> 7
+    DISABLED, // 5 -> 6
+    DISABLED, // 6 -> 9
+    PB7,      // 7 -> 10
+    DISABLED, // 8 -> 4
+    DISABLED, // 9 -> 5
+    DISABLED, // 10 -> 8
+    DISABLED, // 11
+    DISABLED, // 12 -> 0
+    DISABLED, // 13 -> 1
+    DISABLED, // 14 -> 2
+    DISABLED, // 15 -> 3
+    DISABLED, // 16
+    DISABLED, // 17
+    DISABLED, // 18
+    DISABLED, // 19
+    DISABLED, // 20
+    DISABLED, // 21
+    DISABLED, // 22
+    DISABLED, // 23
+    DISABLED, // 24
+    DISABLED, // 25
+    DISABLED, // 26
+    DISABLED, // 27
+    DISABLED, // 28
+    DISABLED, // 29
+    DISABLED, // 30
+    DISABLED, // 31
+};
+
+JoyReader<6, 32> joy_reader(
+    analog_readers,
+    joy_conversion,
+    joy_buttons
+);
 
 // JoyReader wasd_reader(
 //     analog_readers,
-//     {
-//         [](float x)
-//         { return linear(x, 0.0, 1.0, 1.0, -1.0); },
-//         [](float x)
-//         { return linear(x, 0.0, 1.0, -1.0, 1.0); },
-//         [](float x)
-//         { return linear(x, 0.0, 1.0, -1.0, 1.0); },
-//         [](float x)
-//         { return linear(x, 0.0, 1.0, -1.0, 1.0); },
-//         [](float x)
-//         { return linear(x, 64.0 / 255.0, 174.0 / 255.0, 255, 0); },
-//         [](float x)
-//         { return linear(x, 0.0, 1.0, 1.0, 0.0); },
-//     },
+//     wasd_conversion,
 //     {
 //         PB7,      // 0
 //         DISABLED, // 1
@@ -193,18 +197,6 @@ void update_mode()
 void update_joystick()
 {
   auto readings = joy_reader.read();
-
-  // Serial3.print(readings.axes[0]);
-  // Serial3.print(" ");
-  // Serial3.print(readings.axes[1]);
-  // Serial3.print(" ");
-  // Serial3.print(readings.axes[2]);
-  // Serial3.print(" ");
-  // Serial3.print(readings.axes[3]);
-  // Serial3.print(" ");
-  // Serial3.print(readings.axes[4]);
-  // Serial3.print(" ");
-  // Serial3.println(readings.buttons);
 
   auto s = readings.axes[5];
 
