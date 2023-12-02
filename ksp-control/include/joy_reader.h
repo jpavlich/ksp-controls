@@ -26,15 +26,14 @@ template <int NUM_AXES, int NUM_BUTTONS>
 class JoyReader
 {
 private:
-    AnalogValue axes[NUM_AXES];
+    AnalogValue<> axes[NUM_AXES];
     Fun axes_conversions[NUM_AXES];
     int (&button_pins)[NUM_BUTTONS];
     JoyReadings<NUM_AXES> joy_readings;
 
 public:
-    JoyReader(AnalogValue (&axes)[NUM_AXES], Fun (&axes_conversions)[NUM_AXES], int (&button_pins)[NUM_BUTTONS])
-        : axes(axes), axes_conversions(axes_conversions), button_pins(button_pins)
-        // , joy_readings(JoyReadings<NUM_AXES>())
+    JoyReader(AnalogValue<> (&axes)[NUM_AXES], Fun (&axes_conversions)[NUM_AXES], int (&button_pins)[NUM_BUTTONS])
+        : axes(axes), axes_conversions(axes_conversions), button_pins(button_pins), joy_readings(JoyReadings<NUM_AXES>())
     {
     }
 

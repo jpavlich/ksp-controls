@@ -1,29 +1,28 @@
 #pragma once
-#include <vector>
 #include <Arduino.h>
 #include <cmath>
 
 const float MAX_ANALOG_READ = 4095;
-
+template <size_t WINDOW_SIZE = 64, int MAX_ANALOG_READ = 4095>
 class AnalogValue
 {
 private:
     uint16_t pin;
 
     float passes;
-    std::vector<float> window;
+    float window[WINDOW_SIZE];
     uint16_t k;
 
     uint16_t next()
     {
-        return (k + 1) % window.size();
+        return (k + 1) % WINDOW_SIZE;
     }
 
     void read()
     {
         auto raw = (float)analogRead(pin);
-        
-        analog_value = raw / MAX_ANALOG_READ;
+
+        analog_value = raw / (float)MAX_ANALOG_READ;
         auto n = next();
         avg -= window[n];
         avg += analog_value;
@@ -35,10 +34,9 @@ public:
     float avg;
     float analog_value;
     AnalogValue(uint16_t pin,
-                float window_size = 128,
                 float subdiv = 16) : pin(pin),
-                                     passes(window_size / subdiv),
-                                     window(std::vector<float>(window_size, 0)),
+                                     passes(WINDOW_SIZE / subdiv),
+                                     window({0.0}),
                                      k(0),
                                      avg(0),
                                      analog_value(0)
@@ -52,7 +50,6 @@ public:
         {
             read();
         }
-        return avg / window.size();
+        return avg / WINDOW_SIZE;
     }
 };
-

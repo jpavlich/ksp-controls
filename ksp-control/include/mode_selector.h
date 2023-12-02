@@ -2,29 +2,30 @@
 #include "analog_value.h"
 #include <USBHID.h>
 
+template <size_t NUM_DIVISIONS>
 class ModeSelector
 {
 private:
-    AnalogValue value;
-    std::vector<float> divisions;
+    AnalogValue<> value;
+    float divisions[NUM_DIVISIONS];
 
 public:
     size_t mode;
 
-    ModeSelector(AnalogValue &value, std::vector<float> &&mode_mean_values) : value(value), divisions(std::vector<float>()), mode(0)
+    ModeSelector(AnalogValue<> &value, float (&mode_mean_values)[NUM_DIVISIONS]) : value(value), divisions({0.0}), mode(0)
     {
-        for (size_t i = 0; i < mode_mean_values.size() - 1; i++)
+        for (size_t i = 0; i < NUM_DIVISIONS - 1; i++)
         {
-            divisions.push_back((mode_mean_values[i] + mode_mean_values[i + 1]) / 2.0);
+            divisions[i] = (mode_mean_values[i] + mode_mean_values[i + 1]) / 2.0;
         }
-        divisions.push_back(mode_mean_values[mode_mean_values.size() - 1] * 2.0);
+        divisions[NUM_DIVISIONS - 1] = mode_mean_values[NUM_DIVISIONS - 1] * 2.0;
     }
 
     void loop()
     {
         auto val = value.get();
         Serial3.println(val);
-        for (size_t i = 0; i < divisions.size(); i++)
+        for (size_t i = 0; i < NUM_DIVISIONS; i++)
         {
             if (val < divisions[i])
             {

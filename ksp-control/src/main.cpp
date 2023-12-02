@@ -10,13 +10,13 @@
 
 #define LED_BUILTIN PB12
 
-AnalogValue analog_readers[6] = {
-    AnalogValue(PA0),
-    AnalogValue(PA1),
-    AnalogValue(PA2),
-    AnalogValue(PA3),
-    AnalogValue(PA4),
-    AnalogValue(PA5),
+AnalogValue<> analog_readers[6] = {
+    AnalogValue<>(PA0),
+    AnalogValue<>(PA1),
+    AnalogValue<>(PA2),
+    AnalogValue<>(PA3),
+    AnalogValue<>(PA4),
+    AnalogValue<>(PA5),
 };
 
 Fun joy_conversion[6] = {
@@ -70,43 +70,13 @@ int joy_buttons[16] = {
 
 };
 
-int wasd_buttons[32] = {
-    PB7,      // 0
-    DISABLED, // 1
-    DISABLED, // 2
-    DISABLED, // 3
-    DISABLED, // 4
-    DISABLED, // 5
-    DISABLED, // 6
-    DISABLED, // 7
-    DISABLED, // 8
-    DISABLED, // 9
-    DISABLED, // 10
-    DISABLED, // 11
-    DISABLED, // 12
-    DISABLED, // 13
-    DISABLED, // 14
-    DISABLED, // 15
-    DISABLED, // 16
-    DISABLED, // 17
-    DISABLED, // 18
-    DISABLED, // 19
-    DISABLED, // 20
-    DISABLED, // 21
-    DISABLED, // 22
-    DISABLED, // 23
-    DISABLED, // 24
-    DISABLED, // 25
-    DISABLED, // 26
-    DISABLED, // 27
-    DISABLED, // 28
-    DISABLED, // 29
-    DISABLED, // 30
-    DISABLED, // 31
+int wasd_buttons[1] = {
+    PB7, // 0
+
 };
 
 JoyReader<6, 16> joy_reader(analog_readers, joy_conversion, joy_buttons);
-JoyReader<6, 32> wasd_reader(analog_readers, wasd_conversion, wasd_buttons);
+JoyReader<6, 1> wasd_reader(analog_readers, wasd_conversion, wasd_buttons);
 
 USBCompositeSerial compositeSerial;
 USBHID HID;
@@ -116,14 +86,16 @@ HIDKeyboard keyboard(HID);
 
 size_t current_joystick = 0;
 
-AnalogValue modeSelectorValue = AnalogValue(PA6);
+AnalogValue<> modeSelectorValue = AnalogValue<>(PA6);
 
-ModeSelector modeSelector(modeSelectorValue, {171.0 / 1023.0,
-                                              346.0 / 1023.0,
-                                              510.0 / 1023.0,
-                                              682.0 / 1023.0,
-                                              842.0 / 1023.0,
-                                              1.0});
+float mode_mean_values[6] = {171.0 / 1023.0,
+                             346.0 / 1023.0,
+                             510.0 / 1023.0,
+                             682.0 / 1023.0,
+                             842.0 / 1023.0,
+                             1.0};
+
+ModeSelector<6> modeSelector(modeSelectorValue, mode_mean_values);
 
 const int ROWS = 5;
 const int COLS = 5;
