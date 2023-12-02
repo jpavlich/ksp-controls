@@ -3,7 +3,7 @@
 #include <cmath>
 #include <USBHID.h>
 #include <functional>
-#include "analog_value.h"
+#include "analog_reader.h"
 #include "common.h"
 
 template <int NUM_AXES>
@@ -26,12 +26,12 @@ template <int NUM_AXES, int NUM_BUTTONS>
 class JoyReader
 {
 private:
-    AnalogValue<> axes[NUM_AXES];
+    AnalogReader<> axes[NUM_AXES];
     Fun axes_conversions[NUM_AXES];
     int (&button_pins)[NUM_BUTTONS];
 
 public:
-    JoyReader(AnalogValue<> (&axes)[NUM_AXES], Fun (&axes_conversions)[NUM_AXES], int (&button_pins)[NUM_BUTTONS])
+    JoyReader(AnalogReader<> (&axes)[NUM_AXES], Fun (&axes_conversions)[NUM_AXES], int (&button_pins)[NUM_BUTTONS])
         : axes(axes), axes_conversions(axes_conversions), button_pins(button_pins)
     {
     }
@@ -46,18 +46,10 @@ public:
 
     void read(JoyReadings<NUM_AXES> &readings)
     {
-        // Serial.println(axes_conversions[0](0.5));
-        // auto f = [](float x)
-        // { return linear(x, 0.0, 1.0, 32767, -32767); };
-        // f(0.5);
         for (size_t i = 0; i < NUM_AXES; i++)
         {
             readings.axes[i] = axes_conversions[i](axes[i].get());
-            // readings.axes[i] = axes[i].get();
-            // Serial3.print(readings.axes[i]);
-            // Serial3.print(" ");
         }
-        // Serial3.println();
 
         readings.buttons = 0;
         for (size_t i = 0; i < NUM_BUTTONS; i++)

@@ -6,7 +6,7 @@
 #include "key_codes.h"
 #include "mode_selector.h"
 #include "joy_reader.h"
-#include "analog_value.h"
+#include "analog_reader.h"
 
 // #define LED_BUILTIN PB12
 
@@ -26,13 +26,13 @@ const size_t WASD_I_END = WASD_I_START + NUM_WASD;
 size_t mode = 0;
 size_t prev_mode = 0;
 
-AnalogValue<> analog_readers[NUM_AXES] = {
-    AnalogValue<>(PA0),
-    AnalogValue<>(PA1),
-    AnalogValue<>(PA2),
-    AnalogValue<>(PA3),
-    AnalogValue<>(PA4),
-    AnalogValue<>(PA5),
+AnalogReader<> analog_readers[NUM_AXES] = {
+    AnalogReader<>(PA0),
+    AnalogReader<>(PA1),
+    AnalogReader<>(PA2),
+    AnalogReader<>(PA3),
+    AnalogReader<>(PA4),
+    AnalogReader<>(PA5),
 };
 
 Fun joy_conversion[NUM_AXES] = {
@@ -105,7 +105,7 @@ JoyReader<NUM_AXES, NUM_JOY_BUTTONS>
     joy_reader(analog_readers, joy_conversion, joy_buttons);
 JoyReader<NUM_AXES, NUM_WASD_BUTTONS> wasd_reader(analog_readers, wasd_conversion, wasd_buttons);
 
-JoyReadings<NUM_AXES> readings[NUM_MODES];
+JoyReadings<NUM_AXES> readings;
 
 USBHID HID;
 
@@ -114,7 +114,7 @@ USBXBox360W<NUM_JOYSTICKS> x360;
 // HIDJoystick joystick(HID);
 HIDKeyboard keyboard(HID);
 
-AnalogValue<> modeSelectorValue = AnalogValue<>(PA6);
+AnalogReader<> modeSelectorValue = AnalogReader<>(PA6);
 
 float mode_mean_values[NUM_MODES] = {171.0 / 1023.0,
                                      346.0 / 1023.0,
@@ -162,51 +162,50 @@ void setup()
   Serial3.println("\nReady");
 }
 
-void update_x360(size_t i)
+void update_x360(size_t i, JoyReadings<NUM_AXES> &readings)
 {
 
-  auto s = readings[i].axes[5];
+  auto s = readings.axes[5];
 
-  size_t joy_i = i;
-  x360.controllers[joy_i].X(readings[i].axes[0] * s);
-  x360.controllers[joy_i].Y(readings[i].axes[1] * s);
-  x360.controllers[joy_i].XRight(readings[i].axes[2] * s);
-  x360.controllers[joy_i].YRight(readings[i].axes[3] * s);
-  x360.controllers[joy_i].sliderLeft(readings[i].axes[4]);
-  x360.controllers[joy_i].buttons(readings[i].buttons);
+  x360.controllers[i].X(readings.axes[0] * s);
+  x360.controllers[i].Y(readings.axes[1] * s);
+  x360.controllers[i].XRight(readings.axes[2] * s);
+  x360.controllers[i].YRight(readings.axes[3] * s);
+  x360.controllers[i].sliderLeft(readings.axes[4]);
+  x360.controllers[i].buttons(readings.buttons);
 
-  x360.controllers[joy_i].send();
+  x360.controllers[i].send();
 }
 
-void update_wasd(size_t i)
+void update_wasd(JoyReadings<NUM_AXES> &readings)
 {
   for (size_t j = 0; j < NUM_AXES; j++)
   {
 
     if (wasd_keys[j][0] != 0)
     {
-      if (readings[i].axes[j] < -0.25 && wasd_axes_prev_reading[j] >= -0.25)
+      if (readings.axes[j] < -0.25 && wasd_axes_prev_reading[j] >= -0.25)
       {
         keyboard.press(wasd_keys[j][0]);
       }
-      else if (readings[i].axes[j] >= -0.25 && wasd_axes_prev_reading[j] < -0.25)
+      else if (readings.axes[j] >= -0.25 && wasd_axes_prev_reading[j] < -0.25)
       {
         keyboard.release(wasd_keys[j][0]);
       }
     }
     if (wasd_keys[j][1] != 0)
     {
-      if (readings[i].axes[j] > 0.25 && wasd_axes_prev_reading[j] <= 0.25)
+      if (readings.axes[j] > 0.25 && wasd_axes_prev_reading[j] <= 0.25)
       {
         keyboard.press(wasd_keys[j][1]);
       }
-      else if (readings[i].axes[j] <= 0.25 && wasd_axes_prev_reading[j] > 0.25)
+      else if (readings.axes[j] <= 0.25 && wasd_axes_prev_reading[j] > 0.25)
 
       {
         keyboard.release(wasd_keys[j][1]);
       }
     }
-    wasd_axes_prev_reading[j] = readings[i].axes[j];
+    wasd_axes_prev_reading[j] = readings.axes[j];
   }
 }
 
@@ -249,22 +248,22 @@ void loop()
   switch (mode)
   {
   case 0: // Enable Joy 1
-    joy_reader.read(readings[0]);
-    update_x360(0);
+    joy_reader.read(readings);
+    update_x360(0, readings);
     // update_joystick(0);
     break;
   case 1: // Enable Joy 2
-    joy_reader.read(readings[1]);
-    update_x360(1);
+    joy_reader.read(readings);
+    update_x360(1, readings);
     break;
   case 2: // Enable WASD 1
-    wasd_reader.read(readings[2]);
-    update_wasd(2);
+    wasd_reader.read(readings);
+    update_wasd(readings);
     break;
 
   default:
-    wasd_reader.read(readings[2]);
-    update_wasd(2);
+    wasd_reader.read(readings);
+    update_wasd(readings);
     break;
   }
 

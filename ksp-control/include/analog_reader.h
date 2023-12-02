@@ -3,8 +3,8 @@
 #include <cmath>
 
 const float MAX_ANALOG_READ = 4095;
-template <size_t WINDOW_SIZE = 64, int MAX_ANALOG_READ = 4095>
-class AnalogValue
+template <size_t WINDOW_SIZE = 32, int MAX_ANALOG_READ = 4095>
+class AnalogReader
 {
 private:
     uint16_t pin;
@@ -22,18 +22,18 @@ private:
     {
         auto raw = (float)analogRead(pin);
 
-        analog_value = raw / (float)MAX_ANALOG_READ;
+        analog_reader = raw / (float)MAX_ANALOG_READ;
         auto n = next();
         avg -= window[n];
-        avg += analog_value;
-        window[n] = analog_value;
+        avg += analog_reader;
+        window[n] = analog_reader;
         k = n;
     }
 
 public:
     float avg;
-    float analog_value;
-    AnalogValue(uint16_t pin,
+    float analog_reader;
+    AnalogReader(uint16_t pin,
                 float subdiv = 16) : pin(pin),
                                      passes(WINDOW_SIZE / subdiv)
                                      
@@ -41,7 +41,7 @@ public:
 
     {
     }
-    ~AnalogValue() {}
+    ~AnalogReader() {}
 
     float get()
     {
