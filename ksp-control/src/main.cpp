@@ -8,8 +8,6 @@
 #include "joy_reader.h"
 #include "analog_value.h"
 
-// const auto DATA_SIZE = sizeof(JoystickReport_t) - 1;
-
 #define LED_BUILTIN PB12
 
 AnalogValue analog_readers[6] = {
@@ -50,7 +48,7 @@ Fun wasd_conversion[6] = {
     { return linear(x, 0.0, 1.0, 1.0, 0.0); },
 };
 
-int joy_buttons[32] = {
+int joy_buttons[16] = {
     // XBox buttons are nuts. The correct button is the
     // one pointed by the '->'
     DISABLED, // 0
@@ -69,6 +67,26 @@ int joy_buttons[32] = {
     DISABLED, // 13 -> 1
     DISABLED, // 14 -> 2
     DISABLED, // 15 -> 3
+
+};
+
+int wasd_buttons[32] = {
+    PB7,      // 0
+    DISABLED, // 1
+    DISABLED, // 2
+    DISABLED, // 3
+    DISABLED, // 4
+    DISABLED, // 5
+    DISABLED, // 6
+    DISABLED, // 7
+    DISABLED, // 8
+    DISABLED, // 9
+    DISABLED, // 10
+    DISABLED, // 11
+    DISABLED, // 12
+    DISABLED, // 13
+    DISABLED, // 14
+    DISABLED, // 15
     DISABLED, // 16
     DISABLED, // 17
     DISABLED, // 18
@@ -87,49 +105,8 @@ int joy_buttons[32] = {
     DISABLED, // 31
 };
 
-JoyReader<6, 32> joy_reader(
-    analog_readers,
-    joy_conversion,
-    joy_buttons
-);
-
-// JoyReader wasd_reader(
-//     analog_readers,
-//     wasd_conversion,
-//     {
-//         PB7,      // 0
-//         DISABLED, // 1
-//         DISABLED, // 2
-//         DISABLED, // 3
-//         DISABLED, // 4
-//         DISABLED, // 5
-//         DISABLED, // 6
-//         DISABLED, // 7
-//         DISABLED, // 8
-//         DISABLED, // 9
-//         DISABLED, // 10
-//         DISABLED, // 11
-//         DISABLED, // 12
-//         DISABLED, // 13
-//         DISABLED, // 14
-//         DISABLED, // 15
-//         DISABLED, // 16
-//         DISABLED, // 17
-//         DISABLED, // 18
-//         DISABLED, // 19
-//         DISABLED, // 20
-//         DISABLED, // 21
-//         DISABLED, // 22
-//         DISABLED, // 23
-//         DISABLED, // 24
-//         DISABLED, // 25
-//         DISABLED, // 26
-//         DISABLED, // 27
-//         DISABLED, // 28
-//         DISABLED, // 29
-//         DISABLED, // 30
-//         DISABLED, // 31
-//     });
+JoyReader<6, 16> joy_reader(analog_readers, joy_conversion, joy_buttons);
+JoyReader<6, 32> wasd_reader(analog_readers, wasd_conversion, wasd_buttons);
 
 USBCompositeSerial compositeSerial;
 USBHID HID;
