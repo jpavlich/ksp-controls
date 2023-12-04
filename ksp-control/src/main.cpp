@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include <USBComposite.h>
 #include <cfloat>
-#include "common.h"
 #include "Keypad.h"
 #include "key_codes.h"
 #include "mode_selector.h"
 #include "analog_reader.h"
 #include "analog_key.h"
+#include "buttons.h"
 #include "util.h"
 
 // #define LED_BUILTIN PB12
@@ -35,6 +35,17 @@ AnalogReader<> analog_readers[NUM_ANALOG_SENSORS] = {
     AnalogReader<>(PA4), // Throttle
     AnalogReader<>(PA5), // Dial
     AnalogReader<>(PA6), // Mode selector dial
+};
+
+Button x360_buttons[1] = {
+    Button(PB7, 7),
+};
+Button joy_buttons[1] = {
+    Button(PB7, 10),
+};
+
+ButtonKey analog_keys_buttons[1] = {
+    ButtonKey(PB7, 'f'),
 };
 
 float analog_values[NUM_ANALOG_SENSORS] = {0.0};
@@ -198,12 +209,14 @@ void update_x360(size_t i)
   map<float, float, NUM_ANALOG_SENSORS>(analog_values, x360_conversion, axes);
   auto s = axes[5];
 
+  uint32_t buttons = read_buttons<1>(x360_buttons);
+
   x360.controllers[i].X(axes[0] * s);
   x360.controllers[i].Y(axes[1] * s);
   x360.controllers[i].XRight(axes[2] * s);
   x360.controllers[i].YRight(axes[3] * s);
   x360.controllers[i].sliderLeft(axes[4]);
-  // x360.controllers[i].buttons(buttons);
+  x360.controllers[i].buttons(buttons);
 
   x360.controllers[i].send();
 }
@@ -211,6 +224,9 @@ void update_joystick()
 {
   float axes[NUM_ANALOG_SENSORS];
   map<float, float, NUM_ANALOG_SENSORS>(analog_values, joy_conversion, axes);
+
+  uint32_t buttons = read_buttons<1>(joy_buttons);
+
   auto s = axes[5];
 
   joystick.X(axes[0] * s);
@@ -218,10 +234,29 @@ void update_joystick()
   joystick.Xrotate(axes[2] * s);
   joystick.Yrotate(axes[3] * s);
   joystick.sliderLeft(axes[4]);
-  // joystick.buttons(buttons);
+  joystick.buttons(buttons);
 
   joystick.send();
 }
+
+void update_key(const Key &k)
+{
+  if (k.stateChanged)
+  {
+    switch (k.kstate)
+    {
+    case PRESSED:
+      keyboard.press(k.kchar);
+      break;
+    case RELEASED:
+      keyboard.release(k.kchar);
+      break;
+    default:
+      break;
+    }
+  }
+}
+
 void update_analog_keys()
 {
   float axes[NUM_ANALOG_SENSORS];
@@ -232,19 +267,13 @@ void update_analog_keys()
     analog_keys[i].update_keys(axes[i]);
     for (size_t j = 0; j < 2; j++)
     {
-      if (analog_keys[i].keys[j].stateChanged)
-      {
-        switch (analog_keys[i].keys[j].kstate)
-        {
-        case PRESSED:
-          keyboard.press(analog_keys[i].keys[j].kchar);
-          break;
-        case RELEASED:
-          keyboard.release(analog_keys[i].keys[j].kchar);
-          break;
-        }
-      }
+      update_key(analog_keys[i].keys[j]);
     }
+  }
+  for (ButtonKey bk : analog_keys_buttons)
+  {
+    bk.read();
+    update_key(bk.key);
   }
 }
 
@@ -256,16 +285,7 @@ void update_keypad()
     {
       if (kpd.key[i].stateChanged)
       {
-        // Serial3.println(kpd.key[i].kchar);
-        switch (kpd.key[i].kstate)
-        {
-        case PRESSED:
-          keyboard.press(kpd.key[i].kchar);
-          break;
-        case RELEASED:
-          keyboard.release(kpd.key[i].kchar);
-          break;
-        }
+        update_key(kpd.key[i]);
       }
     }
   }
@@ -288,7 +308,7 @@ void loop()
   {
     keyboard.releaseAll();
   }
-  Serial3.println(mode);
+  // Serial3.println(mode);
   switch (mode)
   {
   case 0: // Enable Joy 1
@@ -302,8 +322,7 @@ void loop()
     break;
 
   default:
-    // analog_keys_reader.read(readings);
-    // analog_keys(readings);
+    update_analog_keys();
     break;
   }
 
