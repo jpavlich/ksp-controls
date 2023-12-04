@@ -5,125 +5,148 @@
 #include "Keypad.h"
 #include "key_codes.h"
 #include "mode_selector.h"
-#include "joy_reader.h"
 #include "analog_reader.h"
+#include "analog_key.h"
+#include "util.h"
 
 // #define LED_BUILTIN PB12
 
-const size_t NUM_JOYSTICKS = 2;
-const size_t NUM_WASD = 1;
-const size_t NUM_AXES = 6;
+const size_t NUM_JOYSTICKS = 1;
+const size_t NUM_ANALOG_KEYS = 1;
+const size_t NUM_ANALOG_SENSORS = 7;
 const size_t NUM_JOY_BUTTONS = 16;
-const size_t NUM_WASD_BUTTONS = 1;
+const size_t NUM_ANALOG_KEYS_BUTTONS = 1;
 const size_t NUM_MODES = 6;
 const size_t KEYPAD_ROWS = 5;
 const size_t KEYPAD_COLS = 5;
 const size_t JOY_I_START = 0;
 const size_t JOY_I_END = JOY_I_START + NUM_JOYSTICKS;
-const size_t WASD_I_START = JOY_I_END;
-const size_t WASD_I_END = WASD_I_START + NUM_WASD;
+const size_t ANALOG_KEYS_I_START = JOY_I_END;
+const size_t ANALOG_KEYS_I_END = ANALOG_KEYS_I_START + NUM_ANALOG_KEYS;
 
 size_t mode = 0;
 size_t prev_mode = 0;
 
-AnalogReader<> analog_readers[NUM_AXES] = {
-    AnalogReader<>(PA0),
-    AnalogReader<>(PA1),
-    AnalogReader<>(PA2),
-    AnalogReader<>(PA3),
-    AnalogReader<>(PA4),
-    AnalogReader<>(PA5),
+AnalogReader<> analog_readers[NUM_ANALOG_SENSORS] = {
+    AnalogReader<>(PA0), // X
+    AnalogReader<>(PA1), // Y
+    AnalogReader<>(PA2), // X2
+    AnalogReader<>(PA3), // Y2
+    AnalogReader<>(PA4), // Throttle
+    AnalogReader<>(PA5), // Dial
+    AnalogReader<>(PA6), // Mode selector dial
 };
 
-Fun joy_conversion[NUM_AXES] = {
-    [](const float x)
-    { return linear(x, 0.0, 1.0, 32767, -32767); },
-    [](const float x)
-    { return linear(x, 0.0, 1.0, -32767, 32767); },
-    [](const float x)
-    { return linear(x, 0.0, 1.0, -32767, 32767); },
-    [](const float x)
-    { return linear(x, 0.0, 1.0, -32767, 32767); },
-    [](const float x)
-    { return linear(x, 64.0 / 255.0, 174.0 / 255.0, 255, 0); },
-    [](const float x)
-    { return linear(x, 0.0, 1.0, 1.0, 0.0); }};
+float analog_values[NUM_ANALOG_SENSORS] = {0.0};
 
-Fun wasd_conversion[NUM_AXES] = {
-    [](float x)
-    { return linear(x, 0.0, 1.0, 1.0, -1.0); },
-    [](float x)
-    { return linear(x, 0.0, 1.0, -1.0, 1.0); },
-    [](float x)
-    { return linear(x, 0.0, 1.0, -1.0, 1.0); },
-    [](float x)
-    { return linear(x, 0.0, 1.0, -1.0, 1.0); },
-    [](float x)
-    { return linear(x, 64.0 / 255.0, 174.0 / 255.0, 255, 0); },
-    [](float x)
-    { return linear(x, 0.0, 1.0, 1.0, 0.0); },
+float mode_center_values[NUM_MODES + 1] = {
+    0.17,
+    0.34,
+    0.5,
+    0.67,
+    0.82,
+    1.0,
+    2.0};
+
+Mapping<float &, float> x360_conversion[NUM_ANALOG_SENSORS] = {
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, 32767, -32767);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, -32767, 32767);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, -32767, 32767);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, -32767, 32767);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.25, 0.68, 255, 0);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, 1.0, 0.0);
+    },
+    [&](float &x)
+    {
+      return calculate_mode<NUM_MODES>(x, mode_center_values);
+    },
 };
 
-int joy_buttons[NUM_JOY_BUTTONS] = {
-    // XBox buttons are nuts. The correct button is the
-    // one pointed by the '->'
-    DISABLED, // 0
-    DISABLED, // 1
-    DISABLED, // 2
-    DISABLED, // 3
-    DISABLED, // 4 -> 7
-    DISABLED, // 5 -> 6
-    DISABLED, // 6 -> 9
-    PB7,      // 7 -> 10
-    DISABLED, // 8 -> 4
-    DISABLED, // 9 -> 5
-    DISABLED, // 10 -> 8
-    DISABLED, // 11
-    DISABLED, // 12 -> 0
-    DISABLED, // 13 -> 1
-    DISABLED, // 14 -> 2
-    DISABLED, // 15 -> 3
-
+Mapping<float &, float> joy_conversion[NUM_ANALOG_SENSORS] = {
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, 1023, 0);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, 0, 1023);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, 1023, 0);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, 0, 1023);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.25, 0.68, 1023, 0);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, 1.0, 0.0);
+    },
+    [&](float &x)
+    {
+      return calculate_mode<NUM_MODES>(x, mode_center_values);
+    },
 };
 
-int wasd_buttons[NUM_WASD_BUTTONS] = {
-    PB7, // 0
+Mapping<float &, float> analog_keys_conversion[NUM_ANALOG_SENSORS] = {
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, 1.0, -1.0);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, -1.0, 1.0);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, -1.0, 1.0);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, -1.0, 1.0);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.25, 0.68, 1.0, -1.0);
+    },
+    [](float &x)
+    {
+      return linear(x, 0.0, 1.0, 1.0, 0.0);
+    },
+    [&](float &x)
+    {
+      return calculate_mode<NUM_MODES>(x, mode_center_values);
+    },
 };
 
-int wasd_keys[NUM_AXES][2] = {
-    {'a', 'd'},
-    {'w', 's'},
-    {'q', 'e'},
-    {KEY_LEFT_SHIFT, KEY_LEFT_CTRL},
-    {0, 0},
-    {0, 0},
+AnalogKey analog_keys[4]{
+    AnalogKey('a', 'd'),
+    AnalogKey('w', 's'),
+    AnalogKey('q', 'e'),
+    AnalogKey(KEY_LEFT_SHIFT, KEY_LEFT_CTRL),
 };
-
-float wasd_axes_prev_reading[NUM_AXES] = {0.0};
-
-JoyReader<NUM_AXES, NUM_JOY_BUTTONS>
-    joy_reader(analog_readers, joy_conversion, joy_buttons);
-JoyReader<NUM_AXES, NUM_WASD_BUTTONS> wasd_reader(analog_readers, wasd_conversion, wasd_buttons);
-
-JoyReadings<NUM_AXES> readings;
-
-USBHID HID;
-
-// USBMultiXBox360<NUM_JOYSTICKS> x360;
-USBXBox360W<NUM_JOYSTICKS> x360;
-// HIDJoystick joystick(HID);
-HIDKeyboard keyboard(HID);
-
-AnalogReader<> modeSelectorValue = AnalogReader<>(PA6);
-
-float mode_mean_values[NUM_MODES] = {171.0 / 1023.0,
-                                     346.0 / 1023.0,
-                                     510.0 / 1023.0,
-                                     682.0 / 1023.0,
-                                     842.0 / 1023.0,
-                                     1.0};
-
-ModeSelector<NUM_MODES> modeSelector(modeSelectorValue, mode_mean_values);
 
 char keys[KEYPAD_ROWS][KEYPAD_COLS] = {
     {KEY_KP_5, KEY_KP_0, '1', '2', '3'},
@@ -134,16 +157,21 @@ char keys[KEYPAD_ROWS][KEYPAD_COLS] = {
 byte rowPins[KEYPAD_COLS] = {PA9, PA10, PB4, PB5, PB6};
 byte colPins[KEYPAD_COLS] = {PB12, PB13, PB14, PB15, PA8};
 
+USBHID HID;
+USBXBox360W<NUM_JOYSTICKS> x360;
+HIDJoystick joystick(HID);
+HIDKeyboard keyboard(HID);
+
 Keypad kpd = Keypad(makeKeymap(keys), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS);
 
 void setup()
 {
 
   Serial3.begin(115200);
-  joy_reader.setup();
 
   USBComposite.clear();
   HID.registerComponent();
+  USBComposite.setProductString("K-Stick");
   x360.registerComponent();
   USBComposite.begin();
 
@@ -156,60 +184,71 @@ void setup()
   for (size_t i = 0; i < NUM_JOYSTICKS; i++)
   {
     x360.controllers[i].setManualReportMode(true);
+    x360.controllers[i].send();
   }
-  // joystick.setManualReportMode(true);
+  joystick.setManualReportMode(true);
+  joystick.send();
 
   Serial3.println("\nReady");
 }
 
-void update_x360(size_t i, JoyReadings<NUM_AXES> &readings)
+void update_x360(size_t i)
 {
+  float axes[NUM_ANALOG_SENSORS];
+  map<float, float, NUM_ANALOG_SENSORS>(analog_values, x360_conversion, axes);
+  auto s = axes[5];
 
-  auto s = readings.axes[5];
-
-  x360.controllers[i].X(readings.axes[0] * s);
-  x360.controllers[i].Y(readings.axes[1] * s);
-  x360.controllers[i].XRight(readings.axes[2] * s);
-  x360.controllers[i].YRight(readings.axes[3] * s);
-  x360.controllers[i].sliderLeft(readings.axes[4]);
-  x360.controllers[i].buttons(readings.buttons);
+  x360.controllers[i].X(axes[0] * s);
+  x360.controllers[i].Y(axes[1] * s);
+  x360.controllers[i].XRight(axes[2] * s);
+  x360.controllers[i].YRight(axes[3] * s);
+  x360.controllers[i].sliderLeft(axes[4]);
+  // x360.controllers[i].buttons(buttons);
 
   x360.controllers[i].send();
 }
-
-void update_wasd(JoyReadings<NUM_AXES> &readings)
+void update_joystick()
 {
-  for (size_t j = 0; j < NUM_AXES; j++)
+  float axes[NUM_ANALOG_SENSORS];
+  map<float, float, NUM_ANALOG_SENSORS>(analog_values, joy_conversion, axes);
+  auto s = axes[5];
+
+  joystick.X(axes[0] * s);
+  joystick.Y(axes[1] * s);
+  joystick.Xrotate(axes[2] * s);
+  joystick.Yrotate(axes[3] * s);
+  joystick.sliderLeft(axes[4]);
+  // joystick.buttons(buttons);
+
+  joystick.send();
+}
+void update_analog_keys()
+{
+  float axes[NUM_ANALOG_SENSORS];
+  map<float, float, NUM_ANALOG_SENSORS>(analog_values, analog_keys_conversion, axes);
+
+  for (size_t i = 0; i < 4; i++)
   {
-
-    if (wasd_keys[j][0] != 0)
+    analog_keys[i].update_keys(axes[i]);
+    for (size_t j = 0; j < 2; j++)
     {
-      if (readings.axes[j] < -0.25 && wasd_axes_prev_reading[j] >= -0.25)
+      if (analog_keys[i].keys[j].stateChanged)
       {
-        keyboard.press(wasd_keys[j][0]);
-      }
-      else if (readings.axes[j] >= -0.25 && wasd_axes_prev_reading[j] < -0.25)
-      {
-        keyboard.release(wasd_keys[j][0]);
+        switch (analog_keys[i].keys[j].kstate)
+        {
+        case PRESSED:
+          keyboard.press(analog_keys[i].keys[j].kchar);
+          break;
+        case RELEASED:
+          keyboard.release(analog_keys[i].keys[j].kchar);
+          break;
+        }
       }
     }
-    if (wasd_keys[j][1] != 0)
-    {
-      if (readings.axes[j] > 0.25 && wasd_axes_prev_reading[j] <= 0.25)
-      {
-        keyboard.press(wasd_keys[j][1]);
-      }
-      else if (readings.axes[j] <= 0.25 && wasd_axes_prev_reading[j] > 0.25)
-
-      {
-        keyboard.release(wasd_keys[j][1]);
-      }
-    }
-    wasd_axes_prev_reading[j] = readings.axes[j];
   }
 }
 
-void update_keyboard()
+void update_keypad()
 {
   if (kpd.getKeys())
   {
@@ -223,12 +262,8 @@ void update_keyboard()
         case PRESSED:
           keyboard.press(kpd.key[i].kchar);
           break;
-        case HOLD:
-          break;
         case RELEASED:
           keyboard.release(kpd.key[i].kchar);
-          break;
-        case IDLE:
           break;
         }
       }
@@ -238,35 +273,40 @@ void update_keyboard()
 
 void loop()
 {
-  prev_mode = mode;
-  mode = modeSelector.update();
+  // Read all analog sensors
+  map<AnalogReader<>, float, NUM_ANALOG_SENSORS>(
+      analog_readers, [](AnalogReader<> &ar)
+      { return ar.get(); },
+      analog_values);
 
+  // Calculate operation mode from dial
+  prev_mode = mode;
+  mode = calculate_mode<NUM_MODES>(analog_values[6], mode_center_values);
+
+  // When mode dial is moved, release all keys
   if (mode != prev_mode)
   {
     keyboard.releaseAll();
   }
+  Serial3.println(mode);
   switch (mode)
   {
   case 0: // Enable Joy 1
-    joy_reader.read(readings);
-    update_x360(0, readings);
-    // update_joystick(0);
+    update_joystick();
     break;
   case 1: // Enable Joy 2
-    joy_reader.read(readings);
-    update_x360(1, readings);
+    update_x360(0);
     break;
-  case 2: // Enable WASD 1
-    wasd_reader.read(readings);
-    update_wasd(readings);
+  case 2: // Enable ANALOG_KEYS
+    update_analog_keys();
     break;
 
   default:
-    wasd_reader.read(readings);
-    update_wasd(readings);
+    // analog_keys_reader.read(readings);
+    // analog_keys(readings);
     break;
   }
 
-  // update_wasd();
-  update_keyboard();
+  // analog_keys();
+  update_keypad();
 }

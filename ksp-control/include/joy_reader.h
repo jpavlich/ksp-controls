@@ -13,12 +13,7 @@ struct JoyReadings
     uint32_t buttons;
 };
 
-float linear(float val, float min_in, float max_in, float min_out, float max_out)
-{
-    val = std::max(val, min_in);
-    val = std::min(val, max_in);
-    return (val - min_in) * (max_out - min_out) / (max_in - min_in) + min_out;
-}
+
 
 typedef std::function<float(float)> Fun;
 

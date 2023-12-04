@@ -3,7 +3,7 @@
 #include <cmath>
 
 const float MAX_ANALOG_READ = 4095;
-template <size_t WINDOW_SIZE = 32, int MAX_ANALOG_READ = 4095>
+template <size_t WINDOW_SIZE = 16, int MAX_ANALOG_READ = 4095>
 class AnalogReader
 {
 private:
