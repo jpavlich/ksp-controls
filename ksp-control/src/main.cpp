@@ -229,10 +229,10 @@ void update_joystick()
 
   auto s = axes[5];
 
-  joystick.X(axes[0] * s);
-  joystick.Y(axes[1] * s);
-  joystick.Xrotate(axes[2] * s);
-  joystick.Yrotate(axes[3] * s);
+  joystick.X((axes[0] - 511) * s + 511);
+  joystick.Y((axes[1] - 511) * s + 511);
+  joystick.Xrotate((axes[2] - 511) * s + 511);
+  joystick.Yrotate((axes[3] - 511) * s + 511);
   joystick.sliderLeft(axes[4]);
   joystick.buttons(buttons);
 
