@@ -1,5 +1,5 @@
 #pragma once
-#include "Key.h"
+#include "key.h"
 
 class AnalogKey
 {

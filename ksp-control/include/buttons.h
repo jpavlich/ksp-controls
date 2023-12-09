@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <cmath>
-#include "Key.h"
+#include "key.h"
 
 class Button
 {

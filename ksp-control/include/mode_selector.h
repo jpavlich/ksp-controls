@@ -1,4 +1,5 @@
 #pragma once
+
 template <size_t NUM_MODES>
 size_t calculate_mode(float val, float (&mode_center_values)[NUM_MODES + 1])
 {

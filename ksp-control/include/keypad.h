@@ -1,6 +1,6 @@
 /*
 ||
-|| @file Keypad.h
+|| @file keypad.h
 || @version 3.1
 || @author Mark Stanley, Alexander Brevig
 || @contact mstanley@technologist.com, alexanderbrevig@gmail.com
@@ -33,7 +33,7 @@
 #ifndef KEYPAD_H
 #define KEYPAD_H
 
-#include "Key.h"
+#include "key.h"
 
 // bperrybap - Thanks for a well reasoned argument and the following macro(s).
 // See http://arduino.cc/forum/index.php/topic,142041.msg1069480.html#msg1069480
