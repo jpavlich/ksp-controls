@@ -51,7 +51,7 @@ void DockingMode::update(float (&analog_values)[NUM_ANALOG_SENSORS], bool mode_c
 {
     if (mode_changed)
     {
-        keyboard.write(KEY_DELETE); // KSP Staging mode
+        // keyboard.write(KEY_DELETE); // KSP Staging mode
     }
 
     float axes[NUM_ANALOG_SENSORS];

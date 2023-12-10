@@ -54,7 +54,7 @@ void StagingMode::update(float (&analog_values)[NUM_ANALOG_SENSORS], bool mode_c
 
     if (mode_changed)
     {
-        keyboard.write(KEY_INSERT); // KSP Staging mode
+        // keyboard.write(KEY_INSERT); // KSP Staging mode
     }
     float axes[NUM_ANALOG_SENSORS];
     map<float, float, NUM_ANALOG_SENSORS>(analog_values, staging_conversion, axes);
