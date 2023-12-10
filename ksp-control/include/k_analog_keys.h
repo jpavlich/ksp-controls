@@ -47,7 +47,7 @@ ButtonKey analog_keys_buttons[1] = {
     ButtonKey(PB7, 'f'),
 };
 
-void update_analog_keys(HIDKeyboard &keyboard, float (&analog_values)[NUM_ANALOG_SENSORS])
+void update_analog_keys(HIDKeyboard &keyboard, HIDJoystick &joystick, float (&analog_values)[NUM_ANALOG_SENSORS])
 {
     float axes[NUM_ANALOG_SENSORS];
     map<float, float, NUM_ANALOG_SENSORS>(analog_values, analog_keys_conversion, axes);

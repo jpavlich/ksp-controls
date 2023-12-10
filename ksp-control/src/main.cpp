@@ -30,9 +30,9 @@ AnalogReader<> analog_readers[NUM_ANALOG_SENSORS] = {
 float analog_values[NUM_ANALOG_SENSORS] = {0.0};
 
 USBHID HID;
-// USBXBox360W<NUM_JOYSTICKS> x360;
 HIDJoystick joystick(HID);
-HIDSwitchController controller(HID);
+// USBXBox360W<NUM_JOYSTICKS> x360;
+// HIDSwitchController nswitch(HID);
 HIDKeyboard keyboard(HID);
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS);
@@ -54,13 +54,12 @@ void setup()
     delay(200);
   }
 
-  // setup_x360(x360);
   setup_joystick(joystick);
-  setup_nswitch(controller);
+  // setup_x360(x360);
+  // setup_nswitch(nswitch);
 
   Serial3.println("\nReady");
 }
-
 
 void loop()
 {
@@ -78,30 +77,19 @@ void loop()
   if (mode != prev_mode)
   {
     keyboard.releaseAll();
-    for (size_t i = 0; i < NUM_JOYSTICKS; i++)
-    {
-      // reset_x360_throttle(i);
-    }
   }
-  // Serial3.println(mode);
   switch (mode)
   {
   case 0: // Enable Joy 1
     update_joystick(joystick, analog_values);
-    // update_x360(0);
     break;
-  case 1: // Enable Joy 2
-    // update_x360(1);
-    break;
-  case 2: // Enable ANALOG_KEYS
-    update_analog_keys(keyboard, analog_values);
+  case 1: // Enable ANALOG_KEYS
+    update_analog_keys(keyboard, joystick, analog_values);
     break;
 
   default:
-    update_analog_keys(keyboard, analog_values);
+    update_analog_keys(keyboard, joystick, analog_values);
     break;
   }
-
-  // analog_keys();
   update_keypad(keyboard, keypad);
 }
