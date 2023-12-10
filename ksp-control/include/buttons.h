@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <cmath>
 #include "key.h"
+#include "util.h"
 
 class Button
 {
@@ -32,6 +33,8 @@ uint32_t read_buttons(Button (&buttons)[NUM_BUTTONS])
     return but;
 }
 
+
+
 class ButtonKey
 {
 private:
@@ -53,3 +56,14 @@ public:
         prev_state = key.kstate;
     }
 };
+
+template <int NUM_BUTTONS>
+uint32_t read_button_keys(HIDKeyboard &keyboard, ButtonKey (&buttons)[NUM_BUTTONS])
+{
+    for (size_t i = 0; i < NUM_BUTTONS; i++)
+    {
+        ButtonKey &bk = buttons[i];
+        bk.read();
+        update_key(keyboard, bk.key);
+    }
+}

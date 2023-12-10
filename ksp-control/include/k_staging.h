@@ -9,12 +9,12 @@
 class StagingMode
 {
 private:
+    HIDKeyboard &keyboard;
     HIDJoystick &joystick;
 
 public:
-    StagingMode(HIDJoystick &joystick) : joystick(joystick) {}
+    StagingMode(HIDKeyboard &keyboard, HIDJoystick &joystick) : keyboard(keyboard), joystick(joystick) {}
 
     void setup();
-    void reset();
-    void update(float (&analog_values)[NUM_ANALOG_SENSORS]);
+    void update(float (&analog_values)[NUM_ANALOG_SENSORS], bool mode_changed);
 };

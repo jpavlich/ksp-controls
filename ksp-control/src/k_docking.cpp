@@ -15,7 +15,7 @@ Mapping<float &, float> rcs_analog_keys_conversion[NUM_ANALOG_SENSORS] = {
     },
     [](float &x)
     {
-        return linear(x, 0.0, 1.0, 1.0, -1.0);
+        return linear(x, 0.0, 1.0, -1.0, 1.0);
     },
     [](float &x)
     {
@@ -47,8 +47,13 @@ ButtonKey rcs_analog_keys_buttons[NUM_BUTTONS] = {
     ButtonKey(PB7, 'f'),
 };
 
-void DockingMode::update(float (&analog_values)[NUM_ANALOG_SENSORS])
+void DockingMode::update(float (&analog_values)[NUM_ANALOG_SENSORS], bool mode_changed)
 {
+    if (mode_changed)
+    {
+        keyboard.write(KEY_DELETE); // KSP Staging mode
+    }
+
     float axes[NUM_ANALOG_SENSORS];
     map<float, float, NUM_ANALOG_SENSORS>(analog_values, rcs_analog_keys_conversion, axes);
 

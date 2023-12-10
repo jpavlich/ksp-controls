@@ -6,7 +6,7 @@
 #include "util.h"
 #include "k_mode_selector.h"
 
-Button x360_buttons[1] = {
+Button x360_buttons[NUM_BUTTONS] = {
     Button(PB7, 7),
 };
 

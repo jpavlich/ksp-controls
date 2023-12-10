@@ -15,7 +15,6 @@
 #include "util.h"
 #include "config.h"
 
-
 AnalogReader<> analog_readers[NUM_ANALOG_SENSORS] = {
     AnalogReader<>(PA0), // X
     AnalogReader<>(PA1), // Y
@@ -34,7 +33,7 @@ HIDJoystick joystick(HID);
 // HIDSwitchController nswitch(HID);
 HIDKeyboard keyboard(HID);
 
-StagingMode staging(joystick);
+StagingMode staging(keyboard, joystick);
 DockingMode docking(keyboard, joystick);
 KerbalMode kerbal(keyboard, joystick);
 ModeSelector mode_selector(keyboard, joystick);
@@ -78,13 +77,13 @@ void loop()
   switch (mode_selector.mode)
   {
   case 0: // Staging control
-    staging.update(analog_values);
+    staging.update(analog_values, mode_changed);
     break;
   case 1: // RCS controls
-    docking.update(analog_values);
+    docking.update(analog_values, mode_changed);
     break;
   case 2: // Kerbal controls
-    kerbal.update(analog_values);
+    kerbal.update(analog_values, mode_changed);
     break;
   default:
     break;

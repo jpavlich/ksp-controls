@@ -47,17 +47,12 @@ ButtonKey kerbal_analog_keys_buttons[NUM_BUTTONS] = {
     ButtonKey(PB7, 'f'),
 };
 
-void KerbalMode::update(float (&analog_values)[NUM_ANALOG_SENSORS])
+void KerbalMode::update(float (&analog_values)[NUM_ANALOG_SENSORS], bool mode_changed)
 {
     float axes[NUM_ANALOG_SENSORS];
     map<float, float, NUM_ANALOG_SENSORS>(analog_values, kerbal_analog_keys_conversion, axes);
 
-    for (size_t i = 0; i < NUM_BUTTONS; i++)
-    {
-        ButtonKey &bk = kerbal_analog_keys_buttons[i];
-        bk.read();
-        update_key(keyboard, bk.key);
-    }
+    read_button_keys(keyboard, kerbal_analog_keys_buttons);
 
     joystick.Xrotate(axes[4]);
     joystick.send();

@@ -1,4 +1,5 @@
 #include "k_mode_selector.h"
+#include "joystick.h"
 #include "k_staging.h"
 
 float mode_center_values[NUM_MODES + 1] = {
@@ -19,18 +20,15 @@ bool ModeSelector::update_mode(float (&analog_values)[NUM_ANALOG_SENSORS])
 {
 
     // Calculate operation mode from dial
-    prev_mode = mode;
     mode = calculate_mode<NUM_MODES>(analog_values[6], mode_center_values);
+    bool mode_changed = mode != prev_mode;
 
-    // When mode dial is moved, release all keys
-    if (mode != prev_mode)
+    prev_mode = mode;
+    // When mode dial is moved, release all keys and reset joystick
+    if (mode_changed)
     {
         keyboard.releaseAll();
-        // reset_staging(joystick);
-        return true;
+        reset_joystick(joystick);
     }
-    else
-    {
-        return false;
-    }
+    return mode_changed;
 }

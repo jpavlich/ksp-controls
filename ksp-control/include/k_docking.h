@@ -16,5 +16,5 @@ private:
 
 public:
     DockingMode(HIDKeyboard &keyboard, HIDJoystick &joystick) : keyboard(keyboard), joystick(joystick) {}
-    void update(float (&analog_values)[NUM_ANALOG_SENSORS]);
+    void update(float (&analog_values)[NUM_ANALOG_SENSORS], bool mode_changed);
 };
