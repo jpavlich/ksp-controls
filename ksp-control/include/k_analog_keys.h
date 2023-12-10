@@ -38,9 +38,9 @@ Mapping<float &, float> analog_keys_conversion[NUM_ANALOG_SENSORS] = {
 
 AnalogKey analog_keys[4]{
     AnalogKey('a', 'd'),
-    AnalogKey('w', 's'),
+    AnalogKey('s', 'w'),
     AnalogKey('q', 'e'),
-    AnalogKey(KEY_LEFT_SHIFT, KEY_LEFT_CTRL),
+    AnalogKey(KEY_LEFT_CTRL, KEY_LEFT_SHIFT),
 };
 
 ButtonKey analog_keys_buttons[NUM_BUTTONS] = {
