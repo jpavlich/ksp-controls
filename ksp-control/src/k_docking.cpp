@@ -1,4 +1,3 @@
-#pragma once
 #include <Arduino.h>
 #include <USBComposite.h>
 #include "config.h"
@@ -6,16 +5,17 @@
 #include "analog_key.h"
 #include "key_codes.h"
 #include "buttons.h"
+#include "k_docking.h"
 #include "k_mode_selector.h"
 
-Mapping<float &, float> analog_keys_conversion[NUM_ANALOG_SENSORS] = {
+Mapping<float &, float> rcs_analog_keys_conversion[NUM_ANALOG_SENSORS] = {
     [](float &x)
     {
         return linear(x, 0.0, 1.0, 1.0, -1.0);
     },
     [](float &x)
     {
-        return linear(x, 0.0, 1.0, -1.0, 1.0);
+        return linear(x, 0.0, 1.0, 1.0, -1.0);
     },
     [](float &x)
     {
@@ -36,25 +36,25 @@ Mapping<float &, float> analog_keys_conversion[NUM_ANALOG_SENSORS] = {
     k_mode,
 };
 
-AnalogKey analog_keys[4]{
+AnalogKey rcs_analog_keys[4]{
     AnalogKey('a', 'd'),
     AnalogKey('s', 'w'),
     AnalogKey('q', 'e'),
     AnalogKey(KEY_LEFT_CTRL, KEY_LEFT_SHIFT),
 };
 
-ButtonKey analog_keys_buttons[NUM_BUTTONS] = {
+ButtonKey rcs_analog_keys_buttons[NUM_BUTTONS] = {
     ButtonKey(PB7, 'f'),
 };
 
-void update_analog_keys(HIDKeyboard &keyboard, HIDJoystick &joystick, float (&analog_values)[NUM_ANALOG_SENSORS])
+void DockingMode::update(float (&analog_values)[NUM_ANALOG_SENSORS])
 {
     float axes[NUM_ANALOG_SENSORS];
-    map<float, float, NUM_ANALOG_SENSORS>(analog_values, analog_keys_conversion, axes);
+    map<float, float, NUM_ANALOG_SENSORS>(analog_values, rcs_analog_keys_conversion, axes);
 
     for (size_t i = 0; i < NUM_BUTTONS; i++)
     {
-        ButtonKey& bk = analog_keys_buttons[i];
+        ButtonKey &bk = rcs_analog_keys_buttons[i];
         bk.read();
         update_key(keyboard, bk.key);
     }
@@ -63,10 +63,10 @@ void update_analog_keys(HIDKeyboard &keyboard, HIDJoystick &joystick, float (&an
     joystick.send();
     for (size_t i = 0; i < 4; i++)
     {
-        analog_keys[i].update_keys(axes[i]);
+        rcs_analog_keys[i].update_keys(axes[i]);
         for (size_t j = 0; j < 2; j++)
         {
-            update_key(keyboard, analog_keys[i].keys[j]);
+            update_key(keyboard, rcs_analog_keys[i].keys[j]);
         }
     }
 }

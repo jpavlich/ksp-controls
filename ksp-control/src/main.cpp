@@ -4,9 +4,10 @@
 #include "keypad.h"
 #include "key_codes.h"
 #include "k_mode_selector.h"
-#include "k_analog_keys.h"
+#include "k_docking.h"
 #include "k_keypad.h"
-#include "k_joy.h"
+#include "k_staging.h"
+#include "k_kerbal_keys.h"
 #include "k_nswitch.h"
 #include "analog_reader.h"
 #include "analog_key.h"
@@ -14,8 +15,6 @@
 #include "util.h"
 #include "config.h"
 
-size_t mode = 0;
-size_t prev_mode = 0;
 
 AnalogReader<> analog_readers[NUM_ANALOG_SENSORS] = {
     AnalogReader<>(PA0), // X
@@ -34,6 +33,11 @@ HIDJoystick joystick(HID);
 // USBXBox360W<NUM_JOYSTICKS> x360;
 // HIDSwitchController nswitch(HID);
 HIDKeyboard keyboard(HID);
+
+StagingMode staging(joystick);
+DockingMode docking(keyboard, joystick);
+KerbalMode kerbal(keyboard, joystick);
+ModeSelector mode_selector(keyboard, joystick);
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS);
 
@@ -54,7 +58,7 @@ void setup()
     delay(200);
   }
 
-  setup_joystick(joystick);
+  staging.setup();
   // setup_x360(x360);
   // setup_nswitch(nswitch);
 
@@ -69,24 +73,18 @@ void loop()
       { return ar.get(); },
       analog_values);
 
-  // Calculate operation mode from dial
-  prev_mode = mode;
-  mode = calculate_mode<NUM_MODES>(analog_values[6], mode_center_values);
+  bool mode_changed = mode_selector.update_mode(analog_values);
 
-  // When mode dial is moved, release all keys
-  if (mode != prev_mode)
+  switch (mode_selector.mode)
   {
-    keyboard.releaseAll();
-    reset_joystick(joystick);
-  }
-
-  switch (mode)
-  {
-  case 0: // Enable Joy 1
-    update_joystick(joystick, analog_values);
+  case 0: // Staging control
+    staging.update(analog_values);
     break;
-  case 1: // Enable ANALOG_KEYS
-    update_analog_keys(keyboard, joystick, analog_values);
+  case 1: // RCS controls
+    docking.update(analog_values);
+    break;
+  case 2: // Kerbal controls
+    kerbal.update(analog_values);
     break;
   default:
     break;

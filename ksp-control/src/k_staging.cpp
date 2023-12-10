@@ -1,16 +1,16 @@
-#pragma once
 #include <Arduino.h>
 #include <USBComposite.h>
+#include "k_staging.h"
+#include "k_mode_selector.h"
 #include "config.h"
 #include "buttons.h"
 #include "util.h"
-#include "k_mode_selector.h"
 
-Button joy_buttons[NUM_BUTTONS] = {
+Button staging_buttons[NUM_BUTTONS] = {
     Button(PB7, 10),
 };
 
-Mapping<float &, float> joy_conversion[NUM_ANALOG_SENSORS] = {
+Mapping<float &, float> staging_conversion[NUM_ANALOG_SENSORS] = {
     [](float &x)
     {
         return linear(x, 0.0, 1.0, 1023, 0);
@@ -38,7 +38,14 @@ Mapping<float &, float> joy_conversion[NUM_ANALOG_SENSORS] = {
     k_mode,
 };
 
-void reset_joystick(HIDJoystick &joystick)
+
+void StagingMode::setup()
+{
+    joystick.setManualReportMode(true);
+    reset();
+}
+
+void StagingMode::reset()
 {
     joystick.X(511);
     joystick.Y(511);
@@ -49,18 +56,12 @@ void reset_joystick(HIDJoystick &joystick)
     joystick.send();
 }
 
-void setup_joystick(HIDJoystick &joystick)
-{
-    joystick.setManualReportMode(true);
-    reset_joystick(joystick);
-}
-
-void update_joystick(HIDJoystick &joystick, float (&analog_values)[NUM_ANALOG_SENSORS])
+void StagingMode::update(float (&analog_values)[NUM_ANALOG_SENSORS])
 {
     float axes[NUM_ANALOG_SENSORS];
-    map<float, float, NUM_ANALOG_SENSORS>(analog_values, joy_conversion, axes);
+    map<float, float, NUM_ANALOG_SENSORS>(analog_values, staging_conversion, axes);
 
-    uint32_t buttons = read_buttons<1>(joy_buttons);
+    uint32_t buttons = read_buttons<1>(staging_buttons);
 
     auto s = axes[5];
 
