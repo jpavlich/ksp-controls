@@ -77,7 +77,9 @@ void loop()
   if (mode != prev_mode)
   {
     keyboard.releaseAll();
+    reset_joystick(joystick);
   }
+
   switch (mode)
   {
   case 0: // Enable Joy 1
@@ -86,9 +88,7 @@ void loop()
   case 1: // Enable ANALOG_KEYS
     update_analog_keys(keyboard, joystick, analog_values);
     break;
-
   default:
-    update_analog_keys(keyboard, joystick, analog_values);
     break;
   }
   update_keypad(keyboard, keypad);

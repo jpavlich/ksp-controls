@@ -27,7 +27,7 @@ Mapping<float &, float> analog_keys_conversion[NUM_ANALOG_SENSORS] = {
     },
     [](float &x)
     {
-        return linear(x, 0.25, 0.68, 1.0, -1.0);
+        return linear(x, 0.25, 0.68, 1023, 0);
     },
     [](float &x)
     {
@@ -43,7 +43,7 @@ AnalogKey analog_keys[4]{
     AnalogKey(KEY_LEFT_SHIFT, KEY_LEFT_CTRL),
 };
 
-ButtonKey analog_keys_buttons[1] = {
+ButtonKey analog_keys_buttons[NUM_BUTTONS] = {
     ButtonKey(PB7, 'f'),
 };
 
@@ -52,6 +52,15 @@ void update_analog_keys(HIDKeyboard &keyboard, HIDJoystick &joystick, float (&an
     float axes[NUM_ANALOG_SENSORS];
     map<float, float, NUM_ANALOG_SENSORS>(analog_values, analog_keys_conversion, axes);
 
+    for (size_t i = 0; i < NUM_BUTTONS; i++)
+    {
+        ButtonKey& bk = analog_keys_buttons[i];
+        bk.read();
+        update_key(keyboard, bk.key);
+    }
+
+    joystick.Xrotate(axes[4]);
+    joystick.send();
     for (size_t i = 0; i < 4; i++)
     {
         analog_keys[i].update_keys(axes[i]);
@@ -59,10 +68,5 @@ void update_analog_keys(HIDKeyboard &keyboard, HIDJoystick &joystick, float (&an
         {
             update_key(keyboard, analog_keys[i].keys[j]);
         }
-    }
-    for (ButtonKey bk : analog_keys_buttons)
-    {
-        bk.read();
-        update_key(keyboard, bk.key);
     }
 }

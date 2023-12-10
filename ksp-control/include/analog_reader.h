@@ -34,7 +34,7 @@ public:
     float avg;
     float analog_reader;
     AnalogReader(uint16_t pin,
-                float subdiv = 16) : pin(pin),
+                float subdiv = 8) : pin(pin),
                                      passes(WINDOW_SIZE / subdiv)
                                      
                                   

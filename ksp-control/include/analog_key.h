@@ -9,7 +9,7 @@ private:
 
 public:
     Key keys[2];
-    AnalogKey(int low_key, int high_key, float deadzone = 0.5)
+    AnalogKey(int low_key, int high_key, float deadzone = 0.75)
         : deadzone(deadzone),
           prev_state({IDLE}),
           keys({Key(low_key), Key(high_key)})
